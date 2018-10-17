@@ -1,0 +1,4 @@
+[submodule "motor-controller-nucleo/CanNode"]
+	path = motor-controller-nucleo/CanNode
+	url = https://github.com/HEEV/CanNode.git
+	branch = CanNodeLib
