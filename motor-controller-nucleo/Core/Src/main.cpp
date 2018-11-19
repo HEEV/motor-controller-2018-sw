@@ -108,12 +108,26 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  //MX_SPI2_Init();
-  //MX_USART2_UART_Init();
-  //MX_USB_PCD_Init();
+  MX_SPI2_Init();
+  MX_USART2_UART_Init();
+  MX_USB_PCD_Init();
 
   //set the interface the TMC4671 uses
-  //TMC4671_SPI = &hspi2;
+  TMC4671_SPI = &hspi2;
+  int reg0_value = 0;
+  int reg1_value = 0;
+
+  tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, TMC4671_MOTION_MODE_UQ_UD_EXT);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, 0x0003000E);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_POLARITIES, 0x00000001);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_MAXCNT, 0x00000F9F);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_BBM_H_BBM_L, 0x00001414);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_SV_CHOP, 0x00000007);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PHI_E_SELECTION, 0x00000002);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MODE_RAMP_MODE_MOTION, 0x00000008);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_UQ_UD_EXT, 0x000008A9);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_ACCELERATION, 30);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_VELOCITY_TARGET, 30);
 
   //strcpy(buff1, "hello world\n");
   while (1) {
@@ -122,21 +136,20 @@ int main(void)
     uint32_t time = HAL_GetTick();
 
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    /*
-    int reg_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x01);
-    memcpy(buff1, &reg_value, 4);
-    buff1[5] = '\0';
-    buff1[6] = '\n';
+
+    tmc4671_writeInt(TMC_DEFAULT_MOTOR, 0x01, 0);
+    reg0_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x00);
+    reg1_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x01);
+
+    memcpy(buff1, &reg0_value, 4);
+    buff1[4] = '\0';
     HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
-    reg_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x00);
-    memcpy(buff1, &reg_value, 4);
-    buff1[5] = '\0';
-    buff1[6] = '\n';
+
+    itoa(reg1_value, buff1, 10);
     HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
     
-    reg_value = 2;
-    tmc4671_writeInt(TMC_DEFAULT_MOTOR, 0x01, reg_value);
-    */
+    //++reg_value2;
+    //if (reg_value2 > 5) reg_value2 = 0;
       
     HAL_Delay(500);
   }
@@ -218,7 +231,7 @@ void _Error_Handler(char *file, int line)
   /* User can add his own implementation to report the HAL error return state */
   while(1)
   {
-    GPIOA->BSSR ^= (1 << LD2_Pin);
+    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     HAL_Delay(100);
   }
   /* USER CODE END Error_Handler_Debug */
