@@ -44,10 +44,12 @@
 #include "usart.h"
 #include "usb.h"
 #include "gpio.h"
-#include <CanNode.h>
+
 #include <cstring>
-#include <helpers/API_Header.h>
-#include <ic/TMC4671/TMC4671.h>
+
+#include <CanNode.h>
+#include <tmc/helpers/API_Header.h>
+#include <tmc/ic/TMC4671/TMC4671.h>
 
 /* USER CODE BEGIN Includes */
 
