@@ -22,45 +22,46 @@
 
 #include <cstdint>
 
-using uint8_t  = std::uint8_t;
-using int8_t   = std::int8_t;
-using uint32_t = std::uint32_t;
-
-enum class MotorControllerParameter_t : uint8_t {
+enum class MotorControllerParameter_t : std::uint8_t {
+    // general motor settings
+    MOTOR_DIRECTION = 0,
     // open loop settings
-    OPEN_LOOP_MODE_ENABLED = 0,     /// startup in open loop mode
+    OPEN_LOOP_MODE_ENABLED,         /// startup in open loop mode 
+    OPEN_LOOP_TRANSITION_VELOCITY,  /// RPM to transition from open loop to closed loop mode
     OPEN_LOOP_ACCELERATION,         /// Acceleration in RPM/s
     OPEN_LOOP_VELOCITY,             /// Velocity in RPM
-    OPEN_LOOP_MAX_I,                /// Current in mili-Amps
-    OPEN_LOOP_MAX_V,                /// Voltage in Volts
-    OPEN_LOOP_TRANSITION_VELOCITY,  /// RPM to transition from open loop to closed loop mode
+    OPEN_LOOP_MAX_I,                /// Max current in mili-Amps
+    OPEN_LOOP_MAX_V,                /// Max voltage in Volts
 };
 
 struct MotorControllerPacket_t {
     uint8_t rw_address;
     union data {
-        uint8_t  u8_arr[4];
-        int8_t   i8_arr[4];
-        uint8_t  u8;
-        int8_t   i8;
-        uint16_t u16;
-        int16_t  i16;
-        uint32_t u32;
-        int32_t  i32;
-        float    f32;
+        std::uint8_t  u8_arr[4];
+        std::int8_t   i8_arr[4];
+        std::uint8_t  u8;
+        std::int8_t   i8;
+        std::uint16_t u16;
+        std::int16_t  i16;
+        std::uint32_t u32;
+        std::int32_t  i32;
+        float         f32;
     };
 };
 
-typedef void (*serialIface)(void* iface, uint8_t* buff, uint16_t len);
-
 // This class is basically pure state
 struct MotorControllerSettings_t {
-    
-// define a enum class for communicating between the host computer and the 
-// microcontroller
+    std::uint8_t    MotorDir;
+
+    std::uint8_t    OpenStartup;
+    std::uint16_t   OpenTransistionVel;
+    std::uint16_t   OpenAccel;
+    std::uint16_t   OpenVel;
+    std::uint32_t   OpenMaxI;
+    std::uint16_t   OpenMaxV;
 };
 
-class MotorControllerInterface {
+class MotorControllerInterface 
 public:
     // disallow default initilization and copying
     MotorControllerInterface() = delete;
