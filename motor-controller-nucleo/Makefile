@@ -38,7 +38,8 @@ BUILD_DIR = build
 CXX_SOURCES = \
 CanNode/can_driver.cpp \
 CanNode/CanNode.cpp \
-Core/Src/main.cpp 
+Core/Src/main.cpp \
+Core/Src/MotorControllerInterface.cpp
 
 # C sources
 C_SOURCES =  \
@@ -46,6 +47,13 @@ tmc/ic/TMC4671/TMC4671.c \
 tmc/helpers/CRC.c \
 tmc/helpers/Functions.c \
 tmc/helpers/LinearRamp.c \
+Core/Src/can.c \
+Core/Src/gpio.c \
+Core/Src/spi.c \
+Core/Src/stm32f3xx_hal_msp.c \
+Core/Src/stm32f3xx_it.c \
+Core/Src/system_stm32f3xx.c \
+Core/Src/usart.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_can.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_spi.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_spi_ex.c \
@@ -136,6 +144,10 @@ AS_INCLUDES =
 C_INCLUDES =  \
 -ICanNode \
 -Itmc \
+-ICore/Inc \
+-IDrivers/CMSIS/Device/ST/STM32F3xx/Include \
+-IDrivers/STM32F3xx_HAL_Driver/Inc \
+-IDrivers/CMSIS/Include \
 -IUSB_DEVICE/App \
 -IUSB_DEVICE/Target \
 -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \
