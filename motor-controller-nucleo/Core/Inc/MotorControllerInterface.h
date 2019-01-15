@@ -61,7 +61,7 @@ struct MotorControllerSettings_t {
     std::uint16_t   OpenMaxV;
 };
 
-class MotorControllerInterface 
+class MotorControllerInterface {
 public:
     // disallow default initilization and copying
     MotorControllerInterface() = delete;

@@ -147,7 +147,7 @@ int main(void)
     buff1[4] = '\0';
     HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
 
-    itoa(reg1_value, buff1, 10);
+    reg1_value = atol(buff1);
     HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
     
     //++reg_value2;
