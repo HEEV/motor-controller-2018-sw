@@ -46,7 +46,7 @@ struct MotorControllerPacket_t {
         std::uint32_t u32;
         std::int32_t  i32;
         float         f32;
-    };
+    } data;
 };
 
 // This class is basically pure state
@@ -68,7 +68,7 @@ public:
     MotorControllerInterface(const MotorControllerInterface &cpy) = delete;
     MotorControllerInterface operator=(const MotorControllerInterface &rhs) = delete;
 
-    MotorControllerInterface(MotorControllerSettings_t &Settings);
+    MotorControllerInterface(MotorControllerSettings_t &Settings_);
 
     /** 
      * Send the current value of one of the motor controller settings to the host PC
@@ -89,7 +89,9 @@ public:
     void recieve_packet(MotorControllerPacket_t &packet);
 
 private:
-    void transmit_packet(const MotorControllerPacket_t);
+    void transmit_packet(const MotorControllerPacket_t &packet);
+
+    MotorControllerSettings_t* Settings;
 };
 
 #endif // SERIAL_INTERFACE_H_
