@@ -12,9 +12,20 @@ using int32_t  = std::int32_t;
 using uint32_t = std::uint32_t;
 
 
-MotorControllerInterface::MotorControllerInterface(MotorControllerSettings_t &Settings)
+MotorControllerInterface::MotorControllerInterface(MotorControllerSettings_t &Settings_)
 {
-
+  //keep the address of the settings
+  Settings = &Settings_;
+  // load the settings into hardware from the settings struct
+  /*
+  Settings->MotorDir;
+  Settings->OpenStartup;
+  Settings->OpenTransistionVel;
+  Settings->OpenAccel;
+  Settings->OpenVel;
+  Settings->OpenMaxI;
+  Settings->OpenMaxV;
+  */
 }
 
 /** 
@@ -23,7 +34,56 @@ MotorControllerInterface::MotorControllerInterface(MotorControllerSettings_t &Se
  */
 void MotorControllerInterface::transmit_setting(MotorControllerParameter_t param)
 {
+  // so I don't have to type MotorControllerParameter_t every time
+  using MotorParams = MotorControllerParameter_t;
 
+  MotorControllerPacket_t packet;
+
+  switch(param) {
+    // general motor settings
+    case MotorParams::MOTOR_DIRECTION: 
+      packet.rw_address = static_cast<uint8_t>(param);
+      packet.data.u8 = Settings->MotorDir;
+    break;
+
+    // open loop settings
+    case MotorParams::OPEN_LOOP_MODE_ENABLED:         /// startup in open loop mode 
+      packet.rw_address = static_cast<uint8_t>(param);
+      packet.data.u8 = Settings->OpenStartup;
+    break;
+
+    case MotorParams::OPEN_LOOP_TRANSITION_VELOCITY:  /// RPM to transition from open loop to closed loop mode
+      packet.rw_address = static_cast<uint8_t>(param);
+      packet.data.u16 = Settings->OpenTransistionVel;
+    break;
+    
+    case MotorParams::OPEN_LOOP_ACCELERATION:         /// Acceleration in RPM/s
+      packet.rw_address = static_cast<uint8_t>(param);
+      packet.data.u16 = Settings->OpenAccel;
+    break;
+
+    case MotorParams::OPEN_LOOP_VELOCITY:             /// Velocity in RPM
+      packet.rw_address = static_cast<uint8_t>(param);
+      packet.data.u16 = Settings->OpenVel;
+    break;
+    
+    case MotorParams::OPEN_LOOP_MAX_I:                /// Max current in mili-Amps
+      packet.rw_address = static_cast<uint8_t>(param);
+      packet.data.u16 = Settings->OpenMaxI;
+    break;
+
+    case MotorParams::OPEN_LOOP_MAX_V:                /// Max voltage in Volts 
+      packet.rw_address = static_cast<uint8_t>(param);
+      packet.data.u16 = Settings->OpenMaxV;
+    break;
+
+    // unknown parameter, return early 
+    default:
+      return;
+  }
+
+  // send the packet to the host computer
+  transmit_packet(packet);
 }
 
 /**
@@ -44,7 +104,7 @@ void MotorControllerInterface::recieve_packet(MotorControllerPacket_t &packet)
 
 }
 
-void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t)
+void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &packet)
 {
 
 }
