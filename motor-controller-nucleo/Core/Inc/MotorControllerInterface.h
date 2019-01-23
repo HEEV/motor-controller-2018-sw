@@ -22,6 +22,10 @@
 
 #include <cstdint>
 
+#ifndef PC_INTERFACE
+#define PC_INTERFACE UART
+#endif
+
 enum class MotorControllerParameter_t : std::uint8_t {
     // general motor settings
     MOTOR_DIRECTION = 0,

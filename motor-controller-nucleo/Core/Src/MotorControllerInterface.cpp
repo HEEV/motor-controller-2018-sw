@@ -11,6 +11,7 @@ using uint16_t = std::uint16_t;
 using int32_t  = std::int32_t;
 using uint32_t = std::uint32_t;
 
+extern USART_TypeDef husart2;
 
 MotorControllerInterface::MotorControllerInterface(MotorControllerSettings_t &Settings_)
 {
@@ -104,7 +105,16 @@ void MotorControllerInterface::recieve_packet(MotorControllerPacket_t &packet)
 
 }
 
+/**
+ * Write a packet to the host PC using either the USB or USART interface
+ */
+#if PC_INTERFACE == UART
 void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &packet)
 {
-
+  HAL_USART_Transmit();
 }
+#elif PC_INTERFACE == USB
+void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &packet)
+{
+}
+#endif
