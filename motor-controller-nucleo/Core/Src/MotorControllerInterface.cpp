@@ -116,10 +116,9 @@ void MotorControllerInterface::recieve_packet(MotorControllerPacket_t &packet)
 #if PC_INTERFACE == UART
 void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &packet)
 {
-
-}
   HAL_USART_Transmit();
 }
+
 #elif PC_INTERFACE == USB
 void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &packet)
 {
