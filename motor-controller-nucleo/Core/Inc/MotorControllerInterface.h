@@ -97,6 +97,10 @@ private:
 
     void init_tmc4671(uint8_t motor_type = 3, uint16_t pole_pairs = 14);
 
+    // uses the rw_address in packet to determine the parameter to be copied. if toSettings is true
+    // then the value is copied from packet into settings, otherwise it is copied from settings into packet
+    static void copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings);
+
     MotorControllerSettings_t* Settings;
     
     // default values for the tmc4671 on startup

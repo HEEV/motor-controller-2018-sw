@@ -12,7 +12,7 @@ using uint16_t = std::uint16_t;
 using int32_t  = std::int32_t;
 using uint32_t = std::uint32_t;
 
-extern USART_TypeDef husart2;
+extern UART_HandleTypeDef huart2;
 
 MotorControllerInterface::MotorControllerInterface(MotorControllerSettings_t &Settings_)
 {
@@ -96,7 +96,7 @@ void MotorControllerInterface::transmit_setting(MotorControllerParameter_t param
  * Change one of the motor controller settings based on a packet (assumed to have
  * been recieved from the host computer).
  */
-void MotorControllerInterface::change_setting(MotorControllerPacket_t setting)
+void MotorControllerInterface::change_setting(MotorControllerPacket_t &packet)
 {
 
 }
@@ -113,17 +113,16 @@ void MotorControllerInterface::recieve_packet(MotorControllerPacket_t &packet)
 /**
  * Write a packet to the host PC using either the USB or USART interface
  */
+void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &packet)
+{
+  uint8_t* packetPtr = &packet;
+  const uint16_t packetSz = static_cast<uint16_t>(sizeof(MotorControllerPacket_t));
 #if PC_INTERFACE == UART
-void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &packet)
-{
-  HAL_USART_Transmit();
-}
-
+  HAL_UART_Transmit(huart2, packetPtr, packetSz, 50);
 #elif PC_INTERFACE == USB
-void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &packet)
-{
-}
+  CDC_Transmit_FS(packetPtr, packetSz);
 #endif
+}
 
 void MotorControllerInterface::init_tmc4671(uint8_t motor_type, uint16_t pole_pairs) 
 {
@@ -139,11 +138,62 @@ void MotorControllerInterface::init_tmc4671(uint8_t motor_type, uint16_t pole_pa
   // stuff to setup hall effect sensors here (default config good for now)
   // turn on polarity flipping, interpolation, and reverse direction
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_MODE, 0x00001101);
-  0x2AAA0000, //0x34: 
-  0x80005555, //0x35: 
-  0xD555AAAA, //0x36: 
-  0x04000000, //0x37: 
-  0x00002AAA, //0x38: 
-  // addresses 0x33 - 0x3A
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_060_000, 0x02AAA000);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_180_120, 0x80005555);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_300_240, 0xD555AAAA);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_PHI_E_PHI_M_OFFSET, 0x04000000);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_DPHI_MAX, 0x00002AAA);
   
+}
+
+void MotorControllerInterface::copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings)
+{
+  // so I don't have to type MotorControllerParameter_t every time
+  using MotorParams = MotorControllerParameter_t;
+
+  uint8_t param = packet.rw_address;
+  switch(param) {
+    // general motor settings
+    case MotorParams::MOTOR_DIRECTION: 
+      if(!toSettings) packet.data.u8 = settings.MotorDir;
+      else settings.MotorDir = packet.data.u8;
+    break;
+
+    case MotorParams::MOTOR_TYPE:
+      if(!toSettings) packet.data.u8 = settings.MotorType;
+      else settings.MotorType = packet.data.u8;
+    break;
+    // open loop settings
+    case MotorParams::OPEN_LOOP_MODE_ENABLED:         /// startup in open loop mode 
+      if(!toSettings) packet.data.u8 = settings.OpenStartup;
+      else settings.OpenStartup = packet.data.u8;
+    break;
+
+    case MotorParams::OPEN_LOOP_TRANSITION_VELOCITY:  /// RPM to transition from open loop to closed loop mode
+      if(!toSettings) packet.data.u16 = settings.OpenTransistionVel;
+      else settings.OpenTransistionVel = packet.data.u16;
+    break;
+    
+    case MotorParams::OPEN_LOOP_ACCELERATION:         /// Acceleration in RPM/s
+      if(!toSettings) packet.data.u16 = settings.OpenAccel;
+      else settings.OpenAccel = packet.data.u16;
+    break;
+
+    case MotorParams::OPEN_LOOP_VELOCITY:             /// Velocity in RPM
+      if(!toSettings) packet.data.u16 = Settings.OpenVel;
+      else settings.OpenVel = packet.data.u16;
+    break;
+    
+    case MotorParams::OPEN_LOOP_MAX_I:                /// Max current in mili-Amps
+      packet.data.u16 = Settings->OpenMaxI;
+    break;
+
+    case MotorParams::OPEN_LOOP_MAX_V:                /// Max voltage in Volts 
+      packet.data.u16 = Settings->OpenMaxV;
+    break;
+
+    // unknown parameter, return early 
+    default:
+      return;
+  }
 }
