@@ -4,9 +4,28 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/Core/Inc/**",
                 "${workspaceFolder}/Drivers/STM32F3xx_HAL_Driver/Inc/**",
                 "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32F3xx/Include/**",
-                "${workspaceFolder}/motor-controller-nucleo/USB_DEVICE/App"
+                "${workspaceFolder}/motor-controller-nucleo/USB_DEVICE/App",
+                "/usr/"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/arm-none-eabi-g++",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "clang-x64"
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/Core/Inc/**",
+                "${workspaceFolder}/Drivers/STM32F3xx_HAL_Driver/Inc/**",
+                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32F3xx/Include/**",
+                "${workspaceFolder}/motor-controller-nucleo/USB_DEVICE/App",
+                "C:/Program Files (x86)/GNU Tools Arm Embedded/7 2018-q2-update/arm-none-eabi/include",
+                "C:/Program Files (x86)/GNU Tools Arm Embedded/7 2018-q2-update/arm-none-eabi/include/c++/7.3.1/"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/arm-none-eabi-g++",
