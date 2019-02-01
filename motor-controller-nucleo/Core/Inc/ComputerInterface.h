@@ -1,4 +1,4 @@
-/** MotorControllerPCInterface
+/** ComputerInterface
  * \author Samuel Ellicott 
  * 
  * This class and structures is designed as an interface between the host PC
@@ -76,14 +76,14 @@ struct MotorControllerSettings_t {
     std::uint16_t       OpenMaxV;
 };
 
-class MotorControllerPCInterface {
+class ComputerInterface {
 public:
     // disallow default initilization and copying
-    MotorControllerPCInterface() = delete;
-    MotorControllerPCInterface(const MotorControllerPCInterface &cpy) = delete;
-    MotorControllerPCInterface operator=(const MotorControllerPCInterface &rhs) = delete;
+    ComputerInterface() = delete;
+    ComputerInterface(const ComputerInterface &cpy) = delete;
+    ComputerInterface operator=(const ComputerInterface &rhs) = delete;
 
-    MotorControllerPCInterface(MotorControllerSettings_t *Settings_);
+    ComputerInterface(MotorControllerSettings_t *Settings_);
 
     /** 
      * Send the current value of one of the motor controller settings to the host PC

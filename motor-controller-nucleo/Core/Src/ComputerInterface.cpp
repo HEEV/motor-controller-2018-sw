@@ -1,4 +1,4 @@
-#include "MotorControllerPCInterface.h"
+#include "ComputerInterface.h"
 #include <stm32f3xx_hal.h>
 // from USB_DEVICE/App directory
 #include <usbd_cdc_if.h>
@@ -14,7 +14,7 @@ using uint32_t = std::uint32_t;
 
 extern UART_HandleTypeDef huart2;
 
-MotorControllerPCInterface::MotorControllerPCInterface(MotorControllerSettings_t *Settings_)
+ComputerInterface::ComputerInterface(MotorControllerSettings_t *Settings_)
 {
   //keep the address of the settings
   Settings = Settings_;
@@ -48,7 +48,7 @@ MotorControllerPCInterface::MotorControllerPCInterface(MotorControllerSettings_t
  * Send the current value of one of the motor controller settings to the host PC
  * The input to the function is the parameter that should be transmitted
  */
-void MotorControllerPCInterface::transmit_setting(MotorControllerParameter_t param)
+void ComputerInterface::transmit_setting(MotorControllerParameter_t param)
 {
   MotorControllerPacket_t packet;
 
@@ -67,7 +67,7 @@ void MotorControllerPCInterface::transmit_setting(MotorControllerParameter_t par
  * Change one of the motor controller settings based on a packet (assumed to have
  * been recieved from the host computer).
  */
-void MotorControllerPCInterface::change_setting(MotorControllerPacket_t &packet)
+void ComputerInterface::change_setting(MotorControllerPacket_t &packet)
 {
   //copy the setting from the packet into the class settings struct
   copy_setting(packet, *Settings, true);
@@ -79,7 +79,7 @@ void MotorControllerPCInterface::change_setting(MotorControllerPacket_t &packet)
  * This function is meant to be called from the interrupt service routine for
  * the serial device in stm32f3xx_it.c.
  */
-void MotorControllerPCInterface::recieve_packet(MotorControllerPacket_t &packet)
+void ComputerInterface::recieve_packet(MotorControllerPacket_t &packet)
 {
 
 }
@@ -87,7 +87,7 @@ void MotorControllerPCInterface::recieve_packet(MotorControllerPacket_t &packet)
 /**
  * Write a packet to the host PC using either the USB or USART interface
  */
-void MotorControllerPCInterface::transmit_packet(const MotorControllerPacket_t &packet)
+void ComputerInterface::transmit_packet(const MotorControllerPacket_t &packet)
 {
   const uint8_t* packetPtr = reinterpret_cast<const uint8_t*>(&packet);
   const uint16_t packetSz = static_cast<uint16_t>(sizeof(MotorControllerPacket_t));
@@ -98,12 +98,12 @@ void MotorControllerPCInterface::transmit_packet(const MotorControllerPacket_t &
 #endif
 }
 
-void MotorControllerPCInterface::init_tmc4671(uint8_t motor_type, uint16_t pole_pairs) 
+void ComputerInterface::init_tmc4671(uint8_t motor_type, uint16_t pole_pairs) 
 {
   
 }
 
-void MotorControllerPCInterface::copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings)
+void ComputerInterface::copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings)
 {
   // so I don't have to type MotorControllerParameter_t every time
   using MotorParams = MotorControllerParameter_t;
@@ -157,7 +157,7 @@ void MotorControllerPCInterface::copy_setting(MotorControllerPacket_t &packet, M
   }
 }
 
-const uint32_t MotorControllerPCInterface::tmc4671Registers [] =
+const uint32_t ComputerInterface::tmc4671Registers [] =
 {
   0x00000000, //0x00: (read only)
   0x00000000, //0x01:

@@ -39,7 +39,7 @@ CXX_SOURCES = \
 CanNode/can_driver.cpp \
 CanNode/CanNode.cpp \
 Core/Src/main.cpp \
-Core/Src/MotorControllerPCInterface.cpp
+Core/Src/ComputerInterface.cpp
 
 # C sources
 C_SOURCES =  \

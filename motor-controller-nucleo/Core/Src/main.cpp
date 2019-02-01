@@ -50,7 +50,7 @@
 #include <CanNode.h>
 #include <helpers/API_Header.h>
 #include <ic/TMC4671/TMC4671.h>
-#include "MotorControllerPCInterface.h"
+#include "ComputerInterface.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -125,7 +125,7 @@ int main(void)
   bool countUp = true;
   const int max_vel = -8000;
   mc_settings.MotorType = MotorType_t::BLDC_MOTOR;
-  MotorControllerPCInterface mc_interface(&mc_settings);
+  ComputerInterface mc_interface(&mc_settings);
   tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, TMC4671_MOTION_MODE_VELOCITY);
   // tmc4671_setTargetFlux_raw(TMC_DEFAULT_MOTOR, 2200);
 

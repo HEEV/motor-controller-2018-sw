@@ -1,0 +1,5 @@
+#ifndef _TMC4671_INTERFACE_H
+#define _TMC4671_INTERFACE_H
+
+
+#endif // _TMC4671_INTERFACE_H
