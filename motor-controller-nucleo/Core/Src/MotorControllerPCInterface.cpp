@@ -1,4 +1,4 @@
-#include "MotorControllerInterface.h"
+#include "MotorControllerPCInterface.h"
 #include <stm32f3xx_hal.h>
 // from USB_DEVICE/App directory
 #include <usbd_cdc_if.h>
@@ -14,7 +14,7 @@ using uint32_t = std::uint32_t;
 
 extern UART_HandleTypeDef huart2;
 
-MotorControllerInterface::MotorControllerInterface(MotorControllerSettings_t *Settings_)
+MotorControllerPCInterface::MotorControllerPCInterface(MotorControllerSettings_t *Settings_)
 {
   //keep the address of the settings
   Settings = Settings_;
@@ -27,16 +27,19 @@ MotorControllerInterface::MotorControllerInterface(MotorControllerSettings_t *Se
     tmc4671_writeInt(TMC_DEFAULT_MOTOR, i, tmc4671Registers[i]);
   }
 
+
+  const uint8_t pole_pairs = 14;
+  const uint8_t motor_type = static_cast<uint8_t>(Settings->MotorType);
   // now update the motor type and pole pairs
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, (Settings->MotorType << 16) | (pole_pairs) );
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, (motor_type << 16) | (pole_pairs) );
 
   // stuff to setup hall effect sensors here (default config good for now)
   // turn on polarity flipping, interpolation, and reverse direction
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_MODE, 0x00001101);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_060_000, 0x02AAA000);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_180_120, 0x80005555);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_300_240, 0xD555AAAA);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_PHI_E_PHI_M_OFFSET, 0x04000000);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_MODE, 0x00000101);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_060_000, 0x55557FFF);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_180_120, 0x00012AAB);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_300_240, 0xAAADD557);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_PHI_E_PHI_M_OFFSET, 0x23280000);
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_DPHI_MAX, 0x00002AAA);
 
 }
@@ -45,7 +48,7 @@ MotorControllerInterface::MotorControllerInterface(MotorControllerSettings_t *Se
  * Send the current value of one of the motor controller settings to the host PC
  * The input to the function is the parameter that should be transmitted
  */
-void MotorControllerInterface::transmit_setting(MotorControllerParameter_t param)
+void MotorControllerPCInterface::transmit_setting(MotorControllerParameter_t param)
 {
   MotorControllerPacket_t packet;
 
@@ -64,7 +67,7 @@ void MotorControllerInterface::transmit_setting(MotorControllerParameter_t param
  * Change one of the motor controller settings based on a packet (assumed to have
  * been recieved from the host computer).
  */
-void MotorControllerInterface::change_setting(MotorControllerPacket_t &packet)
+void MotorControllerPCInterface::change_setting(MotorControllerPacket_t &packet)
 {
   //copy the setting from the packet into the class settings struct
   copy_setting(packet, *Settings, true);
@@ -76,7 +79,7 @@ void MotorControllerInterface::change_setting(MotorControllerPacket_t &packet)
  * This function is meant to be called from the interrupt service routine for
  * the serial device in stm32f3xx_it.c.
  */
-void MotorControllerInterface::recieve_packet(MotorControllerPacket_t &packet)
+void MotorControllerPCInterface::recieve_packet(MotorControllerPacket_t &packet)
 {
 
 }
@@ -84,7 +87,7 @@ void MotorControllerInterface::recieve_packet(MotorControllerPacket_t &packet)
 /**
  * Write a packet to the host PC using either the USB or USART interface
  */
-void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &packet)
+void MotorControllerPCInterface::transmit_packet(const MotorControllerPacket_t &packet)
 {
   const uint8_t* packetPtr = reinterpret_cast<const uint8_t*>(&packet);
   const uint16_t packetSz = static_cast<uint16_t>(sizeof(MotorControllerPacket_t));
@@ -95,12 +98,12 @@ void MotorControllerInterface::transmit_packet(const MotorControllerPacket_t &pa
 #endif
 }
 
-void MotorControllerInterface::init_tmc4671(uint8_t motor_type, uint16_t pole_pairs) 
+void MotorControllerPCInterface::init_tmc4671(uint8_t motor_type, uint16_t pole_pairs) 
 {
   
 }
 
-void MotorControllerInterface::copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings)
+void MotorControllerPCInterface::copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings)
 {
   // so I don't have to type MotorControllerParameter_t every time
   using MotorParams = MotorControllerParameter_t;
@@ -154,7 +157,7 @@ void MotorControllerInterface::copy_setting(MotorControllerPacket_t &packet, Mot
   }
 }
 
-const uint32_t MotorControllerInterface::tmc4671Registers [] =
+const uint32_t MotorControllerPCInterface::tmc4671Registers [] =
 {
   0x00000000, //0x00: (read only)
   0x00000000, //0x01:

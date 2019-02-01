@@ -1,4 +1,4 @@
-/** MotorControllerInterface
+/** MotorControllerPCInterface
  * \author Samuel Ellicott 
  * 
  * This class and structures is designed as an interface between the host PC
@@ -40,8 +40,8 @@ enum class MotorControllerParameter_t : std::uint8_t {
 };
 
 enum class MotorType_t : std::uint8_t {
-    BLDC_MOTOR = 0,
-    BRUSHED_MOTOR 
+    BLDC_MOTOR = 3,
+    BRUSHED_MOTOR = 1 
 };
 
 enum class MotorDirection_t : std::uint8_t {
@@ -76,14 +76,14 @@ struct MotorControllerSettings_t {
     std::uint16_t       OpenMaxV;
 };
 
-class MotorControllerInterface {
+class MotorControllerPCInterface {
 public:
     // disallow default initilization and copying
-    MotorControllerInterface() = delete;
-    MotorControllerInterface(const MotorControllerInterface &cpy) = delete;
-    MotorControllerInterface operator=(const MotorControllerInterface &rhs) = delete;
+    MotorControllerPCInterface() = delete;
+    MotorControllerPCInterface(const MotorControllerPCInterface &cpy) = delete;
+    MotorControllerPCInterface operator=(const MotorControllerPCInterface &rhs) = delete;
 
-    MotorControllerInterface(MotorControllerSettings_t *Settings_);
+    MotorControllerPCInterface(MotorControllerSettings_t *Settings_);
 
     /** 
      * Send the current value of one of the motor controller settings to the host PC

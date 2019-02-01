@@ -50,6 +50,7 @@
 #include <CanNode.h>
 #include <helpers/API_Header.h>
 #include <ic/TMC4671/TMC4671.h>
+#include "MotorControllerPCInterface.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -101,6 +102,7 @@ u8 tmc4671_readwriteByte(u8 motor, u8 data, u8 lastTransfer)
 int main(void)
 {
   char buff1[24] = {0};
+  MotorControllerSettings_t mc_settings;
 
   /* MCU Configuration----------------------------------------------------------*/
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -119,19 +121,28 @@ int main(void)
   int reg0_value = 0;
   int reg1_value = 0;
 
-  tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, TMC4671_MOTION_MODE_UQ_UD_EXT);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, 0x0003000E);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_POLARITIES, 0x00000001);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_MAXCNT, 0x00000F9F);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_BBM_H_BBM_L, 0x00001414);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_SV_CHOP, 0x00000007);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PHI_E_SELECTION, 0x00000002);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MODE_RAMP_MODE_MOTION, 0x00000008);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_UQ_UD_EXT, 0x000008A9);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_ACCELERATION, 30);
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_VELOCITY_TARGET, 30);
+  int32_t target_velocity = 0;
+  bool countUp = true;
+  const int max_vel = -8000;
+  mc_settings.MotorType = MotorType_t::BLDC_MOTOR;
+  MotorControllerPCInterface mc_interface(&mc_settings);
+  tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, TMC4671_MOTION_MODE_VELOCITY);
+  // tmc4671_setTargetFlux_raw(TMC_DEFAULT_MOTOR, 2200);
 
-  //strcpy(buff1, "hello world\n");
+  // tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, TMC4671_MOTION_MODE_UQ_UD_EXT);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, 0x0003000E);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_POLARITIES, 0x00000000);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_MAXCNT, 0x00000F9F);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_BBM_H_BBM_L, 0x00001414);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_SV_CHOP, 0x00000007);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PHI_E_SELECTION, 0x00000002);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MODE_RAMP_MODE_MOTION, 0x00000008);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_UQ_UD_EXT, 0x000008A9);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_ACCELERATION, 30);
+  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_VELOCITY_TARGET, 30);
+
+  strcpy(buff1, "hello world\n");
+  HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
   while (1) {
 
     // get the current time
@@ -139,21 +150,39 @@ int main(void)
 
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 
-    tmc4671_writeInt(TMC_DEFAULT_MOTOR, 0x01, 0);
-    reg0_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x00);
-    reg1_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x01);
+    // tmc4671_writeInt(TMC_DEFAULT_MOTOR, 0x01, 0);
+    // reg0_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x00);
+    // reg1_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x01);
 
-    memcpy(buff1, &reg0_value, 4);
-    buff1[4] = '\0';
+    // memcpy(buff1, &reg0_value, 4);
+    // buff1[4] = '\n';
+    // buff1[5] = '\0';
+    // HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
+
+    // reg1_value = atol(buff1);
+    // HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
+    
+    if(target_velocity >= -2000) countUp = false;
+    else if(target_velocity <= max_vel) countUp = true;
+
+    if(countUp) target_velocity+=10;
+    else target_velocity-=10;
+
+    __itoa(target_velocity, buff1, 10);
+    strcat(buff1, "\n");
     HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
+    tmc4671_setTargetVelocity(TMC_DEFAULT_MOTOR, target_velocity);
+    // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_VELOCITY_TARGET, target_velocity);
 
-    reg1_value = atol(buff1);
+    auto flux_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
+    __itoa(flux_current, buff1, 10);
+    strcat(buff1, "\n");
     HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
     
-    //++reg_value2;
-    //if (reg_value2 > 5) reg_value2 = 0;
+    // ++reg_value2;
+    // if (reg_value2 > 5) reg_value2 = 0;
       
-    HAL_Delay(500);
+    HAL_Delay(5);
   }
 
 }
