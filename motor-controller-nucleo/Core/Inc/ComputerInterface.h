@@ -1,7 +1,7 @@
 /** ComputerInterface
  * \author Samuel Ellicott 
  * 
- * This class and structures is designed as an interface between the host PC
+ * This class and structures are designed as an interface between the host PC
  * and the actual microcontroller doing the control loops. i.e it takes the
  * data from the serial line and converts it into a (global) settings struct
  * used in the motor control loop to send commands to the TMC4671 doing all
@@ -45,8 +45,14 @@ enum class MotorType_t : std::uint8_t {
 };
 
 enum class MotorDirection_t : std::uint8_t {
-    CLOCKWISE = 0,
-    COUNTER_CLOCKWISE
+    FORWARD = 0,
+    REVERSE
+};
+
+enum class MotorMode_t : std::uint8_t {
+    TORQUE = 0,
+    VELOCITY,
+    OPEN_LOOP
 };
 
 struct MotorControllerPacket_t {
@@ -78,11 +84,6 @@ struct MotorControllerSettings_t {
 
 class ComputerInterface {
 public:
-    // disallow default initilization and copying
-    ComputerInterface() = delete;
-    ComputerInterface(const ComputerInterface &cpy) = delete;
-    ComputerInterface operator=(const ComputerInterface &rhs) = delete;
-
     ComputerInterface(MotorControllerSettings_t *Settings_);
 
     /** 
@@ -102,6 +103,10 @@ public:
      */
     void recieve_packet(MotorControllerPacket_t &packet);
 
+    // disallow default initilization and copying
+    ComputerInterface() = delete;
+    ComputerInterface(const ComputerInterface &cpy) = delete;
+    ComputerInterface operator=(const ComputerInterface &rhs) = delete;
 private:
     void transmit_packet(const MotorControllerPacket_t &packet);
 
