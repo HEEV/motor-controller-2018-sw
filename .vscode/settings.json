@@ -1,5 +1,6 @@
 {
     "files.associations": {
         "cstdint": "cpp"
-    }
+    },
+    "editor.tabSize": 2
 }

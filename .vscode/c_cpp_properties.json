@@ -14,7 +14,7 @@
             "compilerPath": "/usr/bin/arm-none-eabi-g++",
             "cStandard": "c11",
             "cppStandard": "c++14",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "gcc-x64"
         },
         {
             "name": "Win32",
@@ -31,7 +31,7 @@
             "compilerPath": "/usr/bin/arm-none-eabi-g++",
             "cStandard": "c11",
             "cppStandard": "c++14",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "gcc-x64"
         }
     ],
     "version": 4
