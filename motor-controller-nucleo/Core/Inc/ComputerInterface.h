@@ -29,12 +29,15 @@
 enum class MotorControllerParameter_t : std::uint8_t {
     // general motor settings
     MOTOR_DIRECTION = 0,
+    MOTOR_MODE,                     /// Control mode (Velocity, Torque, or Open-loop)
+    SETPOINT,                       /// The setpoint for the motor (RPM for velocity and open-loop, mA for Torque)
+
     MOTOR_TYPE,                     /// what type of motor is connected, 0 for BLDC, 1 for brushed
+    POLE_PAIRS_KV,                  /// number of poles in a BLDC motor or the Motor constant for a brushed motor
     // open loop settings
     OPEN_LOOP_MODE_ENABLED,         /// startup in open loop mode 
     OPEN_LOOP_TRANSITION_VELOCITY,  /// RPM to transition from open loop to closed loop mode
     OPEN_LOOP_ACCELERATION,         /// Acceleration in RPM/s
-    OPEN_LOOP_VELOCITY,             /// Velocity in RPM
     OPEN_LOOP_MAX_I,                /// Max current in mili-Amps
     OPEN_LOOP_MAX_V,                /// Max voltage in Volts
 };
@@ -49,7 +52,7 @@ enum class MotorDirection_t : std::uint8_t {
     REVERSE
 };
 
-enum class MotorMode_t : std::uint8_t {
+enum class ControlMode_t: std::uint8_t {
     TORQUE = 0,
     VELOCITY,
     OPEN_LOOP
@@ -73,7 +76,12 @@ struct MotorControllerPacket_t {
 // This class is basically pure state
 struct MotorControllerSettings_t {
     MotorDirection_t    MotorDir;
+    ControlMode_t       ControlMode;
+    std::int32_t        Setpoint;
+
     MotorType_t         MotorType;
+    std::uint8_t        PolePairs_KV;
+
     std::uint8_t        OpenStartup;
     std::uint16_t       OpenTransistionVel;
     std::uint16_t       OpenAccel;
@@ -110,16 +118,11 @@ public:
 private:
     void transmit_packet(const MotorControllerPacket_t &packet);
 
-    void init_tmc4671(uint8_t motor_type = 3, uint16_t pole_pairs = 14);
-
     // uses the rw_address in packet to determine the parameter to be copied. if toSettings is true
     // then the value is copied from packet into settings, otherwise it is copied from settings into packet
     static void copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings);
 
     MotorControllerSettings_t* Settings;
-    
-    // default values for the tmc4671 on startup
-    const static std::uint32_t tmc4671Registers[];
 };
 
 #endif // SERIAL_INTERFACE_H_

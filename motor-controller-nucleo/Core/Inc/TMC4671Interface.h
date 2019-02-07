@@ -10,27 +10,29 @@
 #define _TMC4671_INTERFACE_H
 
 #include <cstdint>
+#include <stm32f3xx_hal.h>
 #include "ComputerInterface.h"
 
 class TMC4671Interface {
+public:
     /**
      * Setup the TMC4671 based on the perameters provided in the Settings 
      * struct. 
      */
-    TMC4671Interface(const MotorControllerSettings_t *Settings_);
+    TMC4671Interface(const MotorControllerSettings_t *settings);
 
     /**
      * Reinitilize the TMC4671, the same as the constructor, provided so
      * that a settings change does not necessitate the reinitilization of
      * an object.
      */
-    void change_settings(const MotorControllerSettings_t *Settings_);
+    void change_settings(const MotorControllerSettings_t *settings);
 
     /**
      * Selects from Velocity, Torque, or
      * open loop modes of operation.
      */
-    void set_control_mode(MotorMode_t mode); 
+    void set_control_mode(ControlMode_t mode); 
 
     /**
      * Sets the motor direction either forward or reverse. 
@@ -53,6 +55,16 @@ class TMC4671Interface {
     TMC4671Interface() = delete;
     TMC4671Interface(const TMC4671Interface &cpy) = delete;
     TMC4671Interface operator=(const TMC4671Interface &rhs) = delete;
+
+private:
+    MotorDirection_t Direction;
+    std::int32_t Setpoint;
+    ControlMode_t ControlMode;
+
+    std::uint16_t MotorConstant;
+
+    // default values for the tmc4671 on startup
+    const static std::uint32_t tmc4671Registers[];
 };
 
 #endif // _TMC4671_INTERFACE_H

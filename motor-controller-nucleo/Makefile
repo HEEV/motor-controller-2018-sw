@@ -39,7 +39,8 @@ CXX_SOURCES = \
 CanNode/can_driver.cpp \
 CanNode/CanNode.cpp \
 Core/Src/main.cpp \
-Core/Src/ComputerInterface.cpp
+Core/Src/ComputerInterface.cpp \
+Core/Src/TMC4671Interface.cpp
 
 # C sources
 C_SOURCES =  \

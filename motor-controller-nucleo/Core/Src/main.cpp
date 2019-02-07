@@ -60,8 +60,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-SPI_HandleTypeDef* TMC4671_SPI;
-static const int SPI_TIMEOUT = 50; //timeout in ms
+SPI_HandleTypeDef *TMC4671_SPI;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,29 +68,9 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-// define SPI functions for the trinamic API
-extern "C" {
-  u8 tmc4671_readwriteByte(u8 motor, u8 data, u8 lastTransfer);
-}
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-
-u8 tmc4671_readwriteByte(u8 motor, u8 data, u8 lastTransfer)
-{
-  UNUSED(motor);
-  uint8_t data_rx;
-
-  //clear the SS pin
-  HAL_GPIO_WritePin(TMC4671_SS_GPIO_Port, TMC4671_SS_Pin, GPIO_PIN_RESET);
-  HAL_SPI_TransmitReceive(TMC4671_SPI, &data, &data_rx, 1, SPI_TIMEOUT);
-
-  //if the last transfer set the SS pin
-  if(lastTransfer){
-    HAL_GPIO_WritePin(TMC4671_SS_GPIO_Port, TMC4671_SS_Pin, GPIO_PIN_SET);
-  }
-  return data_rx;
-}
 /* USER CODE END 0 */
 
 /**
@@ -118,6 +97,7 @@ int main(void)
 
   //set the interface the TMC4671 uses
   TMC4671_SPI = &hspi2;
+
   int reg0_value = 0;
   int reg1_value = 0;
 
