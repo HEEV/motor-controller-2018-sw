@@ -31,7 +31,11 @@ enum class MotorControllerParameter_t : std::uint8_t {
     MOTOR_DIRECTION = 0,
     MOTOR_MODE,                     /// Control mode (Velocity, Torque, or Open-loop)
     SETPOINT,                       /// The setpoint for the motor (RPM for velocity and open-loop, mA for Torque)
-
+    // motor current, velocity, and acceleration limits
+    CURRENT_LIMIT,                  /// Sets the limit on the maximum current avalible to the motor
+    VELOCITY_LIMIT,                 /// Sets the maximum RPM of the motor
+    ACCELERATION_LIMIT,             /// Sets the the maximum acceleration of the motor RPM/sec
+    // motor setup fields
     MOTOR_TYPE,                     /// what type of motor is connected, 0 for BLDC, 1 for brushed
     POLE_PAIRS_KV,                  /// number of poles in a BLDC motor or the Motor constant for a brushed motor
     // open loop settings
@@ -78,6 +82,10 @@ struct MotorControllerSettings_t {
     MotorDirection_t    MotorDir;
     ControlMode_t       ControlMode;
     std::int32_t        Setpoint;
+
+    std::uint16_t       CurrentLimit;
+    std::uint32_t       VelocityLimit;
+    std::uint32_t       AccelerationLimit;
 
     MotorType_t         MotorType;
     std::uint8_t        PolePairs_KV;

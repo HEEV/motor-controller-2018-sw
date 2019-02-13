@@ -12,7 +12,10 @@ using uint32_t = std::uint32_t;
 extern SPI_HandleTypeDef *TMC4671_SPI;
 
 // define some helper functions (implemented after the class function implementations)
-void hall_effect_init();
+static void hall_effect_init();
+static void adc_init();
+static void pwm_init();
+
 
 // define SPI functions for the trinamic API (implementation near the bottom of file)
 extern "C" {
@@ -29,7 +32,9 @@ TMC4671Interface::TMC4671Interface(const MotorControllerSettings_t *settings)
     tmc4671_writeInt(TMC_DEFAULT_MOTOR, i, tmc4671Registers[i]);
   }
 
-  // initilize hall effect registers
+  // initilize important TMC4671 registers
+  pwm_init();
+  adc_init();
   hall_effect_init();
 
   // intilize variables
@@ -38,6 +43,7 @@ TMC4671Interface::TMC4671Interface(const MotorControllerSettings_t *settings)
   Setpoint    = 0;
   MotorConstant = 0;
 
+  // initilize the user defined settings
   change_settings(settings);
 }
 
@@ -58,6 +64,13 @@ void TMC4671Interface::change_settings(const MotorControllerSettings_t *settings
 
   // now update the motor type and pole pairs
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, (motor_type << 16) | (pole_pairs) );
+
+  //update the limits (current, velocity, and acceleration)
+  tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_PID_TORQUE_FLUX_LIMITS, BIT_0_TO_15, settings->CurrentLimit);
+
+  // multiply the velocity and acceleration limits times the motor constant to get accurate velocity and acceleration limits
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_VELOCITY_LIMIT, MotorConstant*settings->VelocityLimit);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_ACCELERATION_LIMIT, MotorConstant*settings->AccelerationLimit);
 
   // set the mode of the motor controller
   set_control_mode(settings->ControlMode);
@@ -102,14 +115,20 @@ void TMC4671Interface::set_setpoint(int32_t set_point)
 {
   // take the absolute value of the set point (direction determined by the Direction variable)
   set_point = (set_point < 0) ? -set_point : set_point;
-  Setpoint = set_point;
+  Setpoint = (Direction == MotorDirection_t::REVERSE) ? -set_point : set_point;
+  uint32_t tmc_setpoint = 0;
 
   switch (ControlMode) {
     default:
     case ControlMode_t::VELOCITY :
+      // Note: this could be very dumb
+      tmc_setpoint = MotorConstant * Setpoint;
+      tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_VELOCITY_TARGET, tmc_setpoint);
     break;
 
     case ControlMode_t::TORQUE :
+      tmc_setpoint = Setpoint;
+      tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_PID_TORQUE_FLUX_TARGET, BIT_16_TO_31, tmc_setpoint);
     break;
 
     case ControlMode_t::OPEN_LOOP :
@@ -117,8 +136,10 @@ void TMC4671Interface::set_setpoint(int32_t set_point)
   }
 }
 
+// -------------------------------- Helper functions -------------------------
+
 // Initilize hall TMC4671 hall effect registers 
-void hall_effect_init()
+static void hall_effect_init()
 {
   // stuff to setup hall effect sensors here (default config good for now)
   const uint32_t HALL_POSITION[] = {0x55557FFF, 0x00012AAB, 0xAAADD557};
@@ -127,7 +148,7 @@ void hall_effect_init()
   const uint32_t HALL_OFFSET = (ELECTRICAL_OFFSET << 16) | MECHANICAL_OFFSET;
   const uint32_t MAX_INTERPOLATION = 0x00002AAA;
 
-  // turn on interpolation, and reverse direction
+  // turn on interpolation, and reverse polarity 
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_MODE, 0x00000101);
 
   // define the "position" of the rotor with each hall effect pulse
@@ -140,6 +161,65 @@ void hall_effect_init()
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_DPHI_MAX, MAX_INTERPOLATION);
 }
 
+static void adc_init() 
+{
+  //const uint16_t ADC_PHASE1_SCALE = 305;
+  //const uint16_t ADC_PHASE2_SCALE = 305;
+  //const int16_t ADC_PHASE1_OFFSET = 33434;
+  //const int16_t ADC_PHASE2_OFFSET = 33364;
+
+  const uint16_t ADC_PHASE1_SCALE = 105;
+  const uint16_t ADC_PHASE2_SCALE = 99;
+  const int16_t ADC_PHASE1_OFFSET = 33050;
+  const int16_t ADC_PHASE2_OFFSET = 33160;
+
+  //setup the ADC scaling and offset
+  tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_ADC_I0_SCALE_OFFSET, BIT_0_TO_15, ADC_PHASE1_OFFSET);
+  tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_ADC_I0_SCALE_OFFSET, BIT_16_TO_31, ADC_PHASE1_SCALE);
+
+  tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_ADC_I1_SCALE_OFFSET, BIT_0_TO_15, ADC_PHASE2_OFFSET);
+  tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_ADC_I1_SCALE_OFFSET, BIT_16_TO_31, ADC_PHASE2_SCALE);
+}
+
+static void pwm_init() 
+{
+
+  //set the PWM polarities to be 1-on, 0-off
+  uint8_t PWM_POLARITIES = 0;
+
+  // set pwm frequency to be 50khz
+  // pwm frequency (hz) = 100 (Mhz) / (PWM_MAXCNT + 1)
+  // (p72 in the TMC4671 datasheet)
+  uint16_t PWM_MAXCNT = 1999;
+
+  // 30 * 10 ns break before make time
+  // (p72 in the TMC4671 datasheet)
+  uint8_t BBM_TIME = 30; 
+
+  // put the pwm into centered pwm for FOC 
+  // (p73 on the TMC4671 datasheet)
+  uint8_t PWM_CHOP_MODE = 7;
+
+  // temperarory variable for writting to 32bit registers
+  uint32_t temp_reg = 0;
+
+  // set the PWM polarities register
+  temp_reg = PWM_POLARITIES;
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_POLARITIES, temp_reg);
+
+  // set the PWM max count register
+  temp_reg = PWM_MAXCNT;
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_MAXCNT, temp_reg);
+
+  // set the PWM break before make times
+  temp_reg = (BBM_TIME << 8) | (BBM_TIME);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_BBM_H_BBM_L, temp_reg);
+
+  //set the PWM chopping mode
+  temp_reg = PWM_CHOP_MODE;
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_SV_CHOP, temp_reg);
+}
+// --------------------- Trinamic Library Helper function -------------------------
 
 u8 tmc4671_readwriteByte(u8 motor, u8 data, u8 lastTransfer)
 {
@@ -157,6 +237,8 @@ u8 tmc4671_readwriteByte(u8 motor, u8 data, u8 lastTransfer)
   }
   return data_rx;
 }
+
+// -------------------------Register initilization values -----------------------
 
 // register values for startup
 const uint32_t TMC4671Interface::tmc4671Registers [] =

@@ -51,6 +51,7 @@
 #include <helpers/API_Header.h>
 #include <ic/TMC4671/TMC4671.h>
 #include "ComputerInterface.h"
+#include "TMC4671Interface.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -82,6 +83,16 @@ int main(void)
 {
   char buff1[24] = {0};
   MotorControllerSettings_t mc_settings;
+  mc_settings.MotorDir = MotorDirection_t::REVERSE;
+  mc_settings.ControlMode = ControlMode_t::VELOCITY;
+  mc_settings.Setpoint = 0;
+
+  mc_settings.CurrentLimit = 4000;
+  mc_settings.VelocityLimit = 2000;
+  mc_settings.AccelerationLimit = 500;
+
+  mc_settings.MotorType = MotorType_t::BLDC_MOTOR;
+  mc_settings.PolePairs_KV = 7;
 
   /* MCU Configuration----------------------------------------------------------*/
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -103,10 +114,9 @@ int main(void)
 
   int32_t target_velocity = 0;
   bool countUp = true;
-  const int max_vel = -8000;
-  mc_settings.MotorType = MotorType_t::BLDC_MOTOR;
-  ComputerInterface mc_interface(&mc_settings);
-  tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, TMC4671_MOTION_MODE_VELOCITY);
+  const int max_vel = -1000;
+  ComputerInterface comp_interface(&mc_settings);
+  TMC4671Interface  tmc4671(&mc_settings);
   // tmc4671_setTargetFlux_raw(TMC_DEFAULT_MOTOR, 2200);
 
   // tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, TMC4671_MOTION_MODE_UQ_UD_EXT);
@@ -121,6 +131,8 @@ int main(void)
   // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_ACCELERATION, 30);
   // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_VELOCITY_TARGET, 30);
 
+
+  //tmc4671.set_setpoint(1000);
   strcpy(buff1, "hello world\n");
   HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
   while (1) {
@@ -142,26 +154,23 @@ int main(void)
     // reg1_value = atol(buff1);
     // HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
     
-    if(target_velocity >= -2000) countUp = false;
+    if(target_velocity >= -500) countUp = false;
     else if(target_velocity <= max_vel) countUp = true;
 
     if(countUp) target_velocity+=10;
     else target_velocity-=10;
 
+    tmc4671.set_setpoint(target_velocity);
+
     __itoa(target_velocity, buff1, 10);
     strcat(buff1, "\n");
     HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
-    tmc4671_setTargetVelocity(TMC_DEFAULT_MOTOR, target_velocity);
-    // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_VELOCITY_TARGET, target_velocity);
 
     auto flux_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
     __itoa(flux_current, buff1, 10);
     strcat(buff1, "\n");
     HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
     
-    // ++reg_value2;
-    // if (reg_value2 > 5) reg_value2 = 0;
-      
     HAL_Delay(5);
   }
 

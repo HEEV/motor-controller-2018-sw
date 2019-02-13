@@ -82,90 +82,67 @@ void ComputerInterface::copy_setting(MotorControllerPacket_t &packet, MotorContr
   {
   // general motor settings
   case MotorParams::MOTOR_DIRECTION:
-    if (!toSettings) {
-      packet.u8 = static_cast<uint8_t>(settings.MotorDir);
-    }
-    else {
-      settings.MotorDir = static_cast<MotorDirection_t>(packet.u8);
-    }
+    if (!toSettings) { packet.u8 = static_cast<uint8_t>(settings.MotorDir); }
+    else { settings.MotorDir = static_cast<MotorDirection_t>(packet.u8); }
     break;
   case MotorParams::MOTOR_MODE:
-    if (!toSettings) {
-      packet.u8 = static_cast<uint8_t>(settings.ControlMode);
-    }
-    else {
-      settings.ControlMode = static_cast<ControlMode_t>(packet.u8);
-    }
+    if (!toSettings) { packet.u8 = static_cast<uint8_t>(settings.ControlMode); }
+    else { settings.ControlMode = static_cast<ControlMode_t>(packet.u8); }
     break;
   case MotorParams::SETPOINT:
-    if (!toSettings) {
-      packet.i32 = settings.Setpoint;
-    }
-    else {
-      settings.Setpoint = packet.i32;
-    }
+    if (!toSettings) { packet.i32 = settings.Setpoint; }
+    else { settings.Setpoint = packet.i32; }
+    break;
+  // Torque, velocity, and acceleration limits
+  case MotorParams::CURRENT_LIMIT:
+    if (!toSettings) { packet.i16 = settings.CurrentLimit; }
+    else { settings.CurrentLimit = packet.i16; }
     break;
 
+  case MotorParams::VELOCITY_LIMIT :
+    if (!toSettings) { packet.i32 = settings.VelocityLimit; }
+    else { settings.VelocityLimit= packet.i32; }
+    break;
+
+  case MotorParams::ACCELERATION_LIMIT :
+    if (!toSettings) { packet.i32 = settings.AccelerationLimit; }
+    else { settings.AccelerationLimit = packet.i32; }
+    break;
+
+  // Motor type settings
   case MotorParams::MOTOR_TYPE:
-    if (!toSettings) {
-      packet.u8 = static_cast<uint8_t>(settings.MotorType);
-    }
-    else {
-      settings.MotorType = static_cast<MotorType_t>(packet.u8);
-    }
+    if (!toSettings) { packet.u8 = static_cast<uint8_t>(settings.MotorType); }
+    else { settings.MotorType = static_cast<MotorType_t>(packet.u8); }
     break;
   case MotorParams::POLE_PAIRS_KV:
-    if (!toSettings) {
-      packet.u8 = settings.PolePairs_KV;
-    }
-    else {
-      settings.PolePairs_KV = packet.u8;
-    }
+    if (!toSettings) { packet.u8 = settings.PolePairs_KV; }
+    else { settings.PolePairs_KV = packet.u8; }
     break;
+
   // open loop settings
   case MotorParams::OPEN_LOOP_MODE_ENABLED: /// startup in open loop mode
-    if (!toSettings) {
-      packet.u8 = settings.OpenStartup;
-    }
-    else {
-      settings.OpenStartup = packet.u8;
-    }
+    if (!toSettings) { packet.u8 = settings.OpenStartup; }
+    else { settings.OpenStartup = packet.u8; }
     break;
 
   case MotorParams::OPEN_LOOP_TRANSITION_VELOCITY: /// RPM to transition from open loop to closed loop mode
-    if (!toSettings) {
-      packet.u16 = settings.OpenTransistionVel;
-    }
-    else {
-      settings.OpenTransistionVel = packet.u16;
-    }
+    if (!toSettings) { packet.u16 = settings.OpenTransistionVel; }
+    else { settings.OpenTransistionVel = packet.u16; }
     break;
 
   case MotorParams::OPEN_LOOP_ACCELERATION: /// Acceleration in RPM/s
-    if (!toSettings) {
-      packet.u16 = settings.OpenAccel;
-    }
-    else {
-      settings.OpenAccel = packet.u16;
-    }
+    if (!toSettings) { packet.u16 = settings.OpenAccel; }
+    else { settings.OpenAccel = packet.u16; }
     break;
 
   case MotorParams::OPEN_LOOP_MAX_I: /// Max current in mili-Amps
-    if (!toSettings) {
-      packet.u16 = settings.OpenMaxI;
-    }
-    else {
-      settings.OpenMaxI = packet.u16;
-    }
+    if (!toSettings) { packet.u16 = settings.OpenMaxI; }
+    else { settings.OpenMaxI = packet.u16; }
     break;
 
   case MotorParams::OPEN_LOOP_MAX_V: /// Max voltage in Volts
-    if (!toSettings) {
-      packet.u16 = settings.OpenMaxV;
-    }
-    else {
-      settings.OpenMaxV = packet.u16;
-    }
+    if (!toSettings) { packet.u16 = settings.OpenMaxV; }
+    else { settings.OpenMaxV = packet.u16; }
     break;
 
   // unknown parameter, return early
