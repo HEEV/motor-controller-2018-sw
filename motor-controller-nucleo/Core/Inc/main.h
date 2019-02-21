@@ -62,12 +62,30 @@
 
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define Motor_Temp_Pin GPIO_PIN_0
+#define Motor_Temp_GPIO_Port GPIOA
+#define Transistor_Temp_Pin GPIO_PIN_1
+#define Transistor_Temp_GPIO_Port GPIOA
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
-#define LD2_Pin GPIO_PIN_5
-#define LD2_GPIO_Port GPIOA
+#define A_out1_Pin GPIO_PIN_4
+#define A_out1_GPIO_Port GPIOA
+#define A_out2_Pin GPIO_PIN_5
+#define A_out2_GPIO_Port GPIOA
+#define Throttle_Pin GPIO_PIN_6
+#define Throttle_GPIO_Port GPIOA
+#define A_in1_Pin GPIO_PIN_7
+#define A_in1_GPIO_Port GPIOA
+#define A_in2_Pin GPIO_PIN_4
+#define A_in2_GPIO_Port GPIOC
+#define CAN_Status_Pin GPIO_PIN_0
+#define CAN_Status_GPIO_Port GPIOB
+#define Heartbeat_Pin GPIO_PIN_1
+#define Heartbeat_GPIO_Port GPIOB
+#define User_LED_Pin GPIO_PIN_2
+#define User_LED_GPIO_Port GPIOB
 #define TMC4671_SS_Pin GPIO_PIN_12
 #define TMC4671_SS_GPIO_Port GPIOB
 #define TMC4671_SCK_Pin GPIO_PIN_13
@@ -76,12 +94,24 @@
 #define TMC4671_MISO_GPIO_Port GPIOB
 #define TMC4671_MOSI_Pin GPIO_PIN_15
 #define TMC4671_MOSI_GPIO_Port GPIOB
+#define D_in1_Pin GPIO_PIN_6
+#define D_in1_GPIO_Port GPIOC
+#define D_in2_Pin GPIO_PIN_7
+#define D_in2_GPIO_Port GPIOC
+#define D_in3_Pin GPIO_PIN_8
+#define D_in3_GPIO_Port GPIOC
+#define D_in4_Pin GPIO_PIN_9
+#define D_in4_GPIO_Port GPIOC
+#define D_Out1_Pin GPIO_PIN_8
+#define D_Out1_GPIO_Port GPIOA
+#define D_Out2_Pin GPIO_PIN_9
+#define D_Out2_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define SWO_Pin GPIO_PIN_3
-#define SWO_GPIO_Port GPIOB
+#define SPI_SS_Pin GPIO_PIN_15
+#define SPI_SS_GPIO_Port GPIOA
 
 /* ########################## Assert Selection ############################## */
 /**
