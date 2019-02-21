@@ -130,7 +130,7 @@ int main(void)
   // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_UQ_UD_EXT, 0x000008A9);
   // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_ACCELERATION, 30);
   // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_VELOCITY_TARGET, 30);
-
+  HAL_GPIO_WritePin(CAN_Status_GPIO_Port, CAN_Status_Pin, GPIO_PIN_SET);
 
   //tmc4671.set_setpoint(1000);
   strcpy(buff1, "hello world\n");
@@ -140,7 +140,8 @@ int main(void)
     // get the current time
     uint32_t time = HAL_GetTick();
 
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+    HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
+    HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
 
     // tmc4671_writeInt(TMC_DEFAULT_MOTOR, 0x01, 0);
     // reg0_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x00);
@@ -251,7 +252,7 @@ void _Error_Handler(char *file, int line)
   /* User can add his own implementation to report the HAL error return state */
   while(1)
   {
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+    HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
     HAL_Delay(100);
   }
   /* USER CODE END Error_Handler_Debug */
