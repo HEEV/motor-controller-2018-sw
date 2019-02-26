@@ -126,6 +126,14 @@
 
 /* USER CODE BEGIN Private defines */
 
+// defines for ADC channels ADC2
+#define THROTTLE_ADC 3
+#define A_IN1_ADC 4
+#define A_IN2_ADC 5
+
+// defines for ADC channels ADC1
+#define MOTOR_TEMP_ADC 1
+#define TRANSISTOR_TEMP_ADC 2
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
