@@ -57,6 +57,7 @@ Core/Src/stm32f3xx_it.c \
 Core/Src/system_stm32f3xx.c \
 Core/Src/usart.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_adc.c \
+Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_adc_ex.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_can.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_spi.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_spi_ex.c \
