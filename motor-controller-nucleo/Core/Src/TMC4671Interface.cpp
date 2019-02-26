@@ -136,6 +136,14 @@ void TMC4671Interface::set_setpoint(int32_t set_point)
   }
 }
 
+void TMC4671Interface::enable()
+{
+  HAL_GPIO_WritePin(TMC4671_EN_GPIO_Port, TMC4671_EN_Pin, GPIO_PIN_SET);
+}
+void TMC4671Interface::disable(){
+  HAL_GPIO_WritePin(TMC4671_EN_GPIO_Port, TMC4671_EN_Pin, GPIO_PIN_RESET);
+}
+
 // -------------------------------- Helper functions -------------------------
 
 // Initilize hall TMC4671 hall effect registers 

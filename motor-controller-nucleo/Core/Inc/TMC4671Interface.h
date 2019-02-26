@@ -21,6 +21,7 @@ public:
      */
     TMC4671Interface(const MotorControllerSettings_t *settings);
 
+
     /**
      * Reinitilize the TMC4671, the same as the constructor, provided so
      * that a settings change does not necessitate the reinitilization of
@@ -50,6 +51,9 @@ public:
      * Open loop mode:  ???
      */
     void set_setpoint(std::int32_t set_point);
+
+    void enable();
+    void disable();
 
     // disallow default initilization and copying
     TMC4671Interface() = delete;

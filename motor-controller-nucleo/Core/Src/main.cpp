@@ -43,6 +43,7 @@
 #include "spi.h"
 #include "usart.h"
 #include "usb_device.h"
+#include "usbd_cdc_if.h"
 #include "gpio.h"
 
 #include <cstring>
@@ -105,6 +106,7 @@ int main(void)
   MX_SPI2_Init();
   MX_USART2_UART_Init();
   MX_USB_DEVICE_Init();
+  MX_ADC2_Init();
 
   //set the interface the TMC4671 uses
   TMC4671_SPI = &hspi2;
@@ -117,6 +119,7 @@ int main(void)
   const int max_vel = -1000;
   ComputerInterface comp_interface(&mc_settings);
   TMC4671Interface  tmc4671(&mc_settings);
+  tmc4671.enable();
   // tmc4671_setTargetFlux_raw(TMC_DEFAULT_MOTOR, 2200);
 
   // tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, TMC4671_MOTION_MODE_UQ_UD_EXT);
@@ -130,7 +133,6 @@ int main(void)
   // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_UQ_UD_EXT, 0x000008A9);
   // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_ACCELERATION, 30);
   // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_VELOCITY_TARGET, 30);
-  HAL_GPIO_WritePin(CAN_Status_GPIO_Port, CAN_Status_Pin, GPIO_PIN_SET);
 
   //tmc4671.set_setpoint(1000);
   strcpy(buff1, "hello world\n");
@@ -140,8 +142,11 @@ int main(void)
     // get the current time
     uint32_t time = HAL_GetTick();
 
-    HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
-    HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
+    
+    if (time % 100 == 0)  {
+      HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
+    }
+    //HAL_Delay(500);
 
     // tmc4671_writeInt(TMC_DEFAULT_MOTOR, 0x01, 0);
     // reg0_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x00);
@@ -165,12 +170,14 @@ int main(void)
 
     __itoa(target_velocity, buff1, 10);
     strcat(buff1, "\n");
-    HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
+    //HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
+    CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
 
     auto flux_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
     __itoa(flux_current, buff1, 10);
     strcat(buff1, "\n");
-    HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
+    //HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
+    CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
     
     HAL_Delay(5);
   }
@@ -191,7 +198,7 @@ void SystemClock_Config(void)
     /**Initializes the CPU, AHB and APB busses clocks 
     */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
@@ -216,8 +223,10 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_USART2;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_USART2
+                              |RCC_PERIPHCLK_ADC12;
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+  PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
   PeriphClkInit.USBClockSelection = RCC_USBCLKSOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
