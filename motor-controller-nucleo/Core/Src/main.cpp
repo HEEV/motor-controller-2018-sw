@@ -42,6 +42,7 @@
 #include "can.h"
 #include "spi.h"
 #include "usart.h"
+#include "adc.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 #include "gpio.h"
