@@ -89,17 +89,19 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
   static int8_t adc2_conv_count = 0;
 
-  // read ADC and cast into 16bit number
+  // check if the sequence is over with
+  bool end_of_sequence = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOS);
+
+  // read the ADCValue (this will clear some of the flags)
+  uint16_t ADCValue = static_cast<uint16_t>(HAL_ADC_GetValue(hadc));
+
   if (hadc->Instance == ADC1)
   {
 
   }
-  else if (hadc->Instance == ADC2)// hadc2
+  else if (hadc->Instance == ADC2)
   {
-    bool end_of_sequence = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOS);
-    uint16_t ADCValue = static_cast<uint16_t>(HAL_ADC_GetValue(hadc));
-
-    //conv_count = (end_of_sequence) ? conv_count + 1 : 0;
+    // which channel to put the ADC value in
     switch(adc2_conv_count)
     {
       case 0:
@@ -110,18 +112,16 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
       case 1:
         // A_In1 reading
         A_In1_ADCVal = ADCValue;
-        HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
       break;
 
       case 2:
         // A_In2 reading
         A_In2_ADCVal = ADCValue;
-        HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
       break;
     }
     adc2_conv_count++;
-    // blink the user led
 
+    // go back to the beginning
     if (end_of_sequence) 
     {
       adc2_conv_count = 0;
@@ -203,24 +203,6 @@ int main(void)
     uint32_t time = HAL_GetTick();
 
     HAL_ADC_Start_IT(&hadc2); // hadc defined in adc.c
-    //__HAL_ADC_ENABLE_IT(&hadc2, ADC_IT_EOC);
-    
-    // if(target_velocity >= -500) countUp = false;
-    // else if(target_velocity <= max_vel) countUp = true;
-
-    // if(countUp) target_velocity+=10;
-    // else target_velocity-=10;
-
-
-    //__itoa(target_velocity, buff1, 10);
-    //strcat(buff1, "\n");
-    //HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
-    //CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
-
-    // auto flux_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
-    // __itoa(flux_current, buff1, 10);
-    // strcat(buff1, "\r");
-    //HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
 
     if (time % 50 == 0) {
       tmc4671.set_setpoint(Throttle_ADCVal - 651);
