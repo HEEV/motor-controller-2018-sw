@@ -90,49 +90,43 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   static int8_t adc2_conv_count = 0;
 
   // read ADC and cast into 16bit number
-  // if (hadc->Instance == ADC1)
-  // {
-
-  // }
-  // else if (hadc->Instance == ADC2)// hadc2
-  // {
-  bool end_of_conversion = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOC);
-  bool end_of_sequence = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOS);
-  uint16_t ADCValue = static_cast<uint16_t>(HAL_ADC_GetValue(hadc));
-
-  switch(adc2_conv_count)
+  if (hadc->Instance == ADC1)
   {
-    case 0:
-      //throtle reading
-      Throttle_ADCVal = ADCValue;
-    break;
 
-    case 1:
-      // A_In1 reading
-      A_In1_ADCVal = ADCValue;
-    break;
-
-    case 2:
-      // A_In2 reading
-      A_In2_ADCVal = ADCValue;
-    break;
   }
-  //conv_count = (end_of_sequence) ? conv_count + 1 : 0;
-
-  if(end_of_conversion)
+  else if (hadc->Instance == ADC2)// hadc2
   {
+    bool end_of_sequence = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOS);
+    uint16_t ADCValue = static_cast<uint16_t>(HAL_ADC_GetValue(hadc));
+
+    //conv_count = (end_of_sequence) ? conv_count + 1 : 0;
+    switch(adc2_conv_count)
+    {
+      case 0:
+        //throtle reading
+        Throttle_ADCVal = ADCValue;
+      break;
+
+      case 1:
+        // A_In1 reading
+        A_In1_ADCVal = ADCValue;
+        HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
+      break;
+
+      case 2:
+        // A_In2 reading
+        A_In2_ADCVal = ADCValue;
+        HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
+      break;
+    }
     adc2_conv_count++;
     // blink the user led
-    HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
-  }
-  if (end_of_sequence) 
-  {
-    adc2_conv_count = 0;
-    HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
-  }
-    
 
-  // }
+    if (end_of_sequence) 
+    {
+      adc2_conv_count = 0;
+    }
+  }
   
 }
 
@@ -156,7 +150,7 @@ int main(void)
   // Some default motor settings
   MotorControllerSettings_t mc_settings;
   mc_settings.MotorDir = MotorDirection_t::REVERSE;
-  mc_settings.ControlMode = ControlMode_t::VELOCITY;
+  mc_settings.ControlMode = ControlMode_t::TORQUE;
   mc_settings.Setpoint = 0;
 
   mc_settings.CurrentLimit = 6000;
@@ -201,7 +195,7 @@ int main(void)
   int32_t target_velocity = 0;
   bool countUp = true;
   const int max_vel = -1000;
-  char buff1[32] = {0};
+  char buff1[64] = {0};
   char tmpBuff[6];
 
   while (1) {
@@ -295,7 +289,7 @@ void SystemClock_Config(void)
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_USART2
                               |RCC_PERIPHCLK_ADC12;
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
-  PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
+  PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV4;
   PeriphClkInit.USBClockSelection = RCC_USBCLKSOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
@@ -313,7 +307,6 @@ void SystemClock_Config(void)
   /* SysTick_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
-
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
