@@ -64,16 +64,77 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef *TMC4671_SPI;
+
+// global variables for the analog inputs
+static volatile uint16_t Throttle_ADCVal;
+static volatile uint16_t A_In1_ADCVal;
+static volatile uint16_t A_In2_ADCVal;
+static volatile uint16_t MotorTemp_ADCVal;
+static volatile uint16_t TransistorTemp_ADCVal; 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
+//void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc);
+
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
+// ADC conversion code
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+  // read ADC and cast into 16bit number
+  if (hadc == &hadc1)
+  {
+
+  }
+  else // hadc2
+  {
+    static int8_t conv_count = 0;
+    uint16_t ADCValue = static_cast<uint16_t>(HAL_ADC_GetValue(&hadc2));
+    Throttle_ADCVal = ADCValue;
+
+    //bool end_of_sequence = __HAL_ADC_GET_FLAG(&hadc2, ADC_FLAG_EOS);
+    // blink the user led
+    HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
+
+    switch(conv_count)
+    {
+      default:
+      case 0:
+        //throtle reading
+        Throttle_ADCVal = ADCValue;
+      break;
+
+      case 1:
+        // A_In1 reading
+        A_In1_ADCVal = ADCValue;
+      break;
+
+      case 2:
+        // A_In2 reading
+        A_In2_ADCVal = ADCValue;
+      break;
+    }
+    //conv_count = (end_of_sequence) ? conv_count + 1 : 0;
+    if (conv_count == 3) {
+      conv_count = 0;
+      HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
+    }
+    else
+    {
+      ++ conv_count;
+    }
+    
+
+  }
+  
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -83,10 +144,18 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  char buff1[24] = {0};
+
+  // initilize the ADC variables
+  Throttle_ADCVal = 0;
+  A_In1_ADCVal = 0;
+  A_In2_ADCVal = 0;
+  MotorTemp_ADCVal = 0;
+  TransistorTemp_ADCVal = 0; 
+
+  // Some default motor settings
   MotorControllerSettings_t mc_settings;
   mc_settings.MotorDir = MotorDirection_t::REVERSE;
-  mc_settings.ControlMode = ControlMode_t::VELOCITY;
+  mc_settings.ControlMode = ControlMode_t::TORQUE;
   mc_settings.Setpoint = 0;
 
   mc_settings.CurrentLimit = 4000;
@@ -107,10 +176,22 @@ int main(void)
   MX_SPI2_Init();
   MX_USART2_UART_Init();
   MX_USB_DEVICE_Init();
-  MX_ADC2_Init();
 
-  //set the interface the TMC4671 uses
+  //initilize, then calibrate ADC
+  MX_ADC2_Init();
+  HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+
+  //set the interface the TMC4671 uses (defined in spi.c)
   TMC4671_SPI = &hspi2;
+
+  // setup the two main interfaces
+  ComputerInterface comp_interface(&mc_settings);
+  TMC4671Interface  tmc4671(&mc_settings);
+  tmc4671.enable();
+
+  // start the ADCs: the ADCs run in continous conversion mode with an interrupt,
+  // so, once a set of conversions are made the ADC starts on the next set. 
+  // A callback function reads the value of the ADC into the proper global variable.
 
   int reg0_value = 0;
   int reg1_value = 0;
@@ -118,69 +199,52 @@ int main(void)
   int32_t target_velocity = 0;
   bool countUp = true;
   const int max_vel = -1000;
-  ComputerInterface comp_interface(&mc_settings);
-  TMC4671Interface  tmc4671(&mc_settings);
-  tmc4671.enable();
-  // tmc4671_setTargetFlux_raw(TMC_DEFAULT_MOTOR, 2200);
+  char buff1[32] = {0};
+  char tmpBuff[6];
 
-  // tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, TMC4671_MOTION_MODE_UQ_UD_EXT);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, 0x0003000E);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_POLARITIES, 0x00000000);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_MAXCNT, 0x00000F9F);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_BBM_H_BBM_L, 0x00001414);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_SV_CHOP, 0x00000007);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PHI_E_SELECTION, 0x00000002);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MODE_RAMP_MODE_MOTION, 0x00000008);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_UQ_UD_EXT, 0x000008A9);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_ACCELERATION, 30);
-  // tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_OPENLOOP_VELOCITY_TARGET, 30);
-
-  //tmc4671.set_setpoint(1000);
-  strcpy(buff1, "hello world\n");
-  HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
   while (1) {
-
+    HAL_ADC_Start_IT(&hadc2); // hadc defined in adc.c
     // get the current time
     uint32_t time = HAL_GetTick();
 
     
-    if (time % 100 == 0)  {
+    // if(target_velocity >= -500) countUp = false;
+    // else if(target_velocity <= max_vel) countUp = true;
+
+    // if(countUp) target_velocity+=10;
+    // else target_velocity-=10;
+
+
+    //__itoa(target_velocity, buff1, 10);
+    //strcat(buff1, "\n");
+    //HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
+    //CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
+
+    // auto flux_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
+    // __itoa(flux_current, buff1, 10);
+    // strcat(buff1, "\r");
+    //HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
+
+    if (time % 50 == 0) {
+      tmc4671.set_setpoint(Throttle_ADCVal - 651);
+    }
+    if (time % 100 == 0) {
+
+      strcpy(buff1, "\f\r");
+      __itoa(Throttle_ADCVal, tmpBuff, 10);
+      strcat(buff1, tmpBuff);
+
+      strcat(buff1, "\n\r");
+      __itoa(A_In1_ADCVal, tmpBuff, 10);
+      strcat(buff1, tmpBuff);
+      //strcat(buff1, ", ");
+      //__itoa(A_In2_ADCVal, tmpBuff, 10);
+      //strcat(buff1, tmpBuff);
+      CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
+
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
     }
-    //HAL_Delay(500);
-
-    // tmc4671_writeInt(TMC_DEFAULT_MOTOR, 0x01, 0);
-    // reg0_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x00);
-    // reg1_value = tmc4671_readInt(TMC_DEFAULT_MOTOR, 0x01);
-
-    // memcpy(buff1, &reg0_value, 4);
-    // buff1[4] = '\n';
-    // buff1[5] = '\0';
-    // HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
-
-    // reg1_value = atol(buff1);
-    // HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
-    
-    if(target_velocity >= -500) countUp = false;
-    else if(target_velocity <= max_vel) countUp = true;
-
-    if(countUp) target_velocity+=10;
-    else target_velocity-=10;
-
-    tmc4671.set_setpoint(target_velocity);
-
-    __itoa(target_velocity, buff1, 10);
-    strcat(buff1, "\n");
-    //HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
-    CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
-
-    auto flux_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
-    __itoa(flux_current, buff1, 10);
-    strcat(buff1, "\n");
-    //HAL_UART_Transmit(&huart2, reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1, 10);
-    CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
-    
-    HAL_Delay(5);
+    HAL_Delay(1);
   }
 
 }
