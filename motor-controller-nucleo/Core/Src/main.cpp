@@ -87,51 +87,52 @@ void SystemClock_Config(void);
 // ADC conversion code
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
+  static int8_t adc2_conv_count = 0;
+
   // read ADC and cast into 16bit number
-  if (hadc == &hadc1)
-  {
+  // if (hadc->Instance == ADC1)
+  // {
 
+  // }
+  // else if (hadc->Instance == ADC2)// hadc2
+  // {
+  bool end_of_conversion = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOC);
+  bool end_of_sequence = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOS);
+  uint16_t ADCValue = static_cast<uint16_t>(HAL_ADC_GetValue(hadc));
+
+  switch(adc2_conv_count)
+  {
+    case 0:
+      //throtle reading
+      Throttle_ADCVal = ADCValue;
+    break;
+
+    case 1:
+      // A_In1 reading
+      A_In1_ADCVal = ADCValue;
+    break;
+
+    case 2:
+      // A_In2 reading
+      A_In2_ADCVal = ADCValue;
+    break;
   }
-  else // hadc2
-  {
-    static int8_t conv_count = 0;
-    uint16_t ADCValue = static_cast<uint16_t>(HAL_ADC_GetValue(&hadc2));
-    Throttle_ADCVal = ADCValue;
+  //conv_count = (end_of_sequence) ? conv_count + 1 : 0;
 
-    //bool end_of_sequence = __HAL_ADC_GET_FLAG(&hadc2, ADC_FLAG_EOS);
+  if(end_of_conversion)
+  {
+    adc2_conv_count++;
     // blink the user led
     HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
-
-    switch(conv_count)
-    {
-      default:
-      case 0:
-        //throtle reading
-        Throttle_ADCVal = ADCValue;
-      break;
-
-      case 1:
-        // A_In1 reading
-        A_In1_ADCVal = ADCValue;
-      break;
-
-      case 2:
-        // A_In2 reading
-        A_In2_ADCVal = ADCValue;
-      break;
-    }
-    //conv_count = (end_of_sequence) ? conv_count + 1 : 0;
-    if (conv_count == 3) {
-      conv_count = 0;
-      HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
-    }
-    else
-    {
-      ++ conv_count;
-    }
+  }
+  if (end_of_sequence) 
+  {
+    adc2_conv_count = 0;
+    HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
+  }
     
 
-  }
+  // }
   
 }
 
@@ -155,11 +156,11 @@ int main(void)
   // Some default motor settings
   MotorControllerSettings_t mc_settings;
   mc_settings.MotorDir = MotorDirection_t::REVERSE;
-  mc_settings.ControlMode = ControlMode_t::TORQUE;
+  mc_settings.ControlMode = ControlMode_t::VELOCITY;
   mc_settings.Setpoint = 0;
 
-  mc_settings.CurrentLimit = 4000;
-  mc_settings.VelocityLimit = 2000;
+  mc_settings.CurrentLimit = 6000;
+  mc_settings.VelocityLimit = 10000;
   mc_settings.AccelerationLimit = 500;
 
   mc_settings.MotorType = MotorType_t::BLDC_MOTOR;
@@ -179,6 +180,7 @@ int main(void)
 
   //initilize, then calibrate ADC
   MX_ADC2_Init();
+  //MX_ADC1_Init();
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
 
   //set the interface the TMC4671 uses (defined in spi.c)
@@ -203,10 +205,11 @@ int main(void)
   char tmpBuff[6];
 
   while (1) {
-    HAL_ADC_Start_IT(&hadc2); // hadc defined in adc.c
     // get the current time
     uint32_t time = HAL_GetTick();
 
+    HAL_ADC_Start_IT(&hadc2); // hadc defined in adc.c
+    //__HAL_ADC_ENABLE_IT(&hadc2, ADC_IT_EOC);
     
     // if(target_velocity >= -500) countUp = false;
     // else if(target_velocity <= max_vel) countUp = true;
@@ -237,9 +240,10 @@ int main(void)
       strcat(buff1, "\n\r");
       __itoa(A_In1_ADCVal, tmpBuff, 10);
       strcat(buff1, tmpBuff);
-      //strcat(buff1, ", ");
-      //__itoa(A_In2_ADCVal, tmpBuff, 10);
-      //strcat(buff1, tmpBuff);
+      strcat(buff1, "\n\r");
+
+      __itoa(A_In2_ADCVal, tmpBuff, 10);
+      strcat(buff1, tmpBuff);
       CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
