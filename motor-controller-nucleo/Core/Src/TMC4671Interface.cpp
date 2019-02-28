@@ -151,7 +151,7 @@ static void hall_effect_init()
 {
   // stuff to setup hall effect sensors here (default config good for now)
   const uint32_t HALL_POSITION[] = {0x55557FFF, 0x00012AAB, 0xAAADD557};
-  const uint16_t ELECTRICAL_OFFSET = 0x2328;
+  const uint16_t ELECTRICAL_OFFSET = -10000;
   const uint16_t MECHANICAL_OFFSET = 0x0000;
   const uint32_t HALL_OFFSET = (ELECTRICAL_OFFSET << 16) | MECHANICAL_OFFSET;
   const uint32_t MAX_INTERPOLATION = 0x00002AAA;
