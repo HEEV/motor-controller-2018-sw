@@ -199,7 +199,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   MX_TIM6_Init();
 
-  //initilize, then calibrate ADC
+  //initilize, then calibrate ADCs
   MX_ADC2_Init();
   MX_ADC1_Init();
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
@@ -213,36 +213,42 @@ int main(void)
   TMC4671Interface  tmc4671(&mc_settings);
   tmc4671.enable();
 
-  // start the ADCs: the ADCs run in continous conversion mode with an interrupt,
-  // so, once a set of conversions are made the ADC starts on the next set. 
-  // A callback function reads the value of the ADC into the proper global variable.
-
-  int reg0_value = 0;
-  int reg1_value = 0;
-
   int32_t target_velocity = 0;
-  bool countUp = true;
-  const int max_vel = -1000;
   char buff1[128] = {0};
   char tmpBuff[6];
+  uint32_t time = 0;
+  uint32_t prev_time = 0;
+
+  int8_t ms_cnt50 = 0;
+  int8_t ms_cnt100 = 0;
 
   // start the two ADC's in interrupt mode
+  // start the ADCs: the ADCs run a sequence of conversions with an interrupt after each one.
+  // After each conversion the ADC callback function is run, which puts the ADC value into the
+  // proper global varibles. Timer6 is used to trigger ADC conversions for a sample rate of ~ 1Khz.
   HAL_ADC_Start_IT(&hadc2);
   HAL_ADC_Start_IT(&hadc1);
   // start the ADC conversion trigger timer
-  HAL_TIM_Base_Start_IT(&htim6);
+  HAL_TIM_Base_Start(&htim6);
 
   while (1) {
     // get the current time
-    uint32_t time = HAL_GetTick();
+    prev_time = time;
+    time = HAL_GetTick();
+    uint8_t time_diff = static_cast<uint8_t> (time - prev_time);
 
-    HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
-    //HAL_ADC_Start_IT(&hadc2); // hadc defined in adc.c
 
-    if (time % 50 == 0) {
+    //update counters
+    ms_cnt50 += time_diff;
+    ms_cnt100 += time_diff;
+
+    if (ms_cnt50 >= 50) {
       tmc4671.set_setpoint(Throttle_ADCVal - 723);
+
+      //reset count
+      ms_cnt50 = 0;
     }
-    if (time % 100 == 0) {
+    if (ms_cnt100 >= 100) {
 
       strcpy(buff1, "\f\r");
       __itoa(Throttle_ADCVal, tmpBuff, 10);
@@ -266,8 +272,10 @@ int main(void)
       CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
+
+      //reset count
+      ms_cnt100 = 0;
     }
-    //HAL_Delay(1);
   }
 
 }
