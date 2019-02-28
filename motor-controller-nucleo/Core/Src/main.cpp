@@ -91,6 +91,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 // ADC conversion code
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
+  static int8_t adc1_conv_count = 0;
   static int8_t adc2_conv_count = 0;
 
   // check if the sequence is over with
@@ -101,13 +102,34 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
   if (hadc->Instance == ADC1)
   {
+    // which channel to put the ADC value in
+    switch(adc1_conv_count)
+    {
+      default:
+      case 0:
+        //throtle reading
+        MotorTemp_ADCVal = ADCValue;
+      break;
 
+      case 1:
+        // A_In1 reading
+        TransistorTemp_ADCVal = ADCValue;
+      break;
+    }
+    adc1_conv_count++;
+
+    // go back to the beginning
+    if (end_of_sequence) 
+    {
+      adc1_conv_count = 0;
+    }
   }
   else if (hadc->Instance == ADC2)
   {
     // which channel to put the ADC value in
     switch(adc2_conv_count)
     {
+      default:
       case 0:
         //throtle reading
         Throttle_ADCVal = ADCValue;
@@ -179,8 +201,9 @@ int main(void)
 
   //initilize, then calibrate ADC
   MX_ADC2_Init();
-  //MX_ADC1_Init();
+  MX_ADC1_Init();
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 
   //set the interface the TMC4671 uses (defined in spi.c)
   TMC4671_SPI = &hspi2;
@@ -200,20 +223,24 @@ int main(void)
   int32_t target_velocity = 0;
   bool countUp = true;
   const int max_vel = -1000;
-  char buff1[64] = {0};
+  char buff1[128] = {0};
   char tmpBuff[6];
 
+  // start the two ADC's in interrupt mode
   HAL_ADC_Start_IT(&hadc2);
+  HAL_ADC_Start_IT(&hadc1);
+  // start the ADC conversion trigger timer
   HAL_TIM_Base_Start_IT(&htim6);
 
   while (1) {
     // get the current time
     uint32_t time = HAL_GetTick();
 
+    HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
     //HAL_ADC_Start_IT(&hadc2); // hadc defined in adc.c
 
     if (time % 50 == 0) {
-      tmc4671.set_setpoint(Throttle_ADCVal - 651);
+      tmc4671.set_setpoint(Throttle_ADCVal - 723);
     }
     if (time % 100 == 0) {
 
@@ -228,11 +255,19 @@ int main(void)
 
       __itoa(A_In2_ADCVal, tmpBuff, 10);
       strcat(buff1, tmpBuff);
+      strcat(buff1, "\n\r");
+
+      __itoa(MotorTemp_ADCVal, tmpBuff, 10);
+      strcat(buff1, tmpBuff);
+      strcat(buff1, "\n\r");
+
+      __itoa(TransistorTemp_ADCVal, tmpBuff, 10);
+      strcat(buff1, tmpBuff);
       CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
     }
-    HAL_Delay(1);
+    //HAL_Delay(1);
   }
 
 }
