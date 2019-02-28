@@ -84,6 +84,9 @@ void SystemClock_Config(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+  HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
+}
 
 // ADC conversion code
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
@@ -200,11 +203,14 @@ int main(void)
   char buff1[64] = {0};
   char tmpBuff[6];
 
+  HAL_ADC_Start_IT(&hadc2);
+  HAL_TIM_Base_Start_IT(&htim6);
+
   while (1) {
     // get the current time
     uint32_t time = HAL_GetTick();
 
-    HAL_ADC_Start_IT(&hadc2); // hadc defined in adc.c
+    //HAL_ADC_Start_IT(&hadc2); // hadc defined in adc.c
 
     if (time % 50 == 0) {
       tmc4671.set_setpoint(Throttle_ADCVal - 651);
