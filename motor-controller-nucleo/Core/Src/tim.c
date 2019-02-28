@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : DAC.c
+  * File Name          : TIM.c
   * Description        : This file provides code for the configuration
-  *                      of the DAC instances.
+  *                      of the TIM instances.
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -48,97 +48,81 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "dac.h"
-
-#include "gpio.h"
+#include "tim.h"
 
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
 
-DAC_HandleTypeDef hdac1;
+TIM_HandleTypeDef htim6;
 
-/* DAC1 init function */
-void MX_DAC1_Init(void)
+/* TIM6 init function */
+void MX_TIM6_Init(void)
 {
-  DAC_ChannelConfTypeDef sConfig;
+  TIM_MasterConfigTypeDef sMasterConfig;
 
-    /**DAC Initialization 
-    */
-  hdac1.Instance = DAC1;
-  if (HAL_DAC_Init(&hdac1) != HAL_OK)
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 1000;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 24;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**DAC channel OUT1 config 
-    */
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
-  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
-  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
 
 }
 
-void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  GPIO_InitTypeDef GPIO_InitStruct;
-  if(dacHandle->Instance==DAC1)
+  if(tim_baseHandle->Instance==TIM6)
   {
-  /* USER CODE BEGIN DAC1_MspInit 0 */
+  /* USER CODE BEGIN TIM6_MspInit 0 */
 
-  /* USER CODE END DAC1_MspInit 0 */
-    /* DAC1 clock enable */
-    __HAL_RCC_DAC1_CLK_ENABLE();
-  
-    /**DAC1 GPIO Configuration    
-    PA4     ------> DAC1_OUT1 
-    */
-    GPIO_InitStruct.Pin = A_out1_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(A_out1_GPIO_Port, &GPIO_InitStruct);
+  /* USER CODE END TIM6_MspInit 0 */
+    /* TIM6 clock enable */
+    __HAL_RCC_TIM6_CLK_ENABLE();
 
-    /* DAC1 interrupt Init */
+    /* TIM6 interrupt Init */
     HAL_NVIC_SetPriority(TIM6_DAC_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
-  /* USER CODE BEGIN DAC1_MspInit 1 */
+  /* USER CODE BEGIN TIM6_MspInit 1 */
 
-  /* USER CODE END DAC1_MspInit 1 */
+  /* USER CODE END TIM6_MspInit 1 */
   }
 }
 
-void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
+void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  if(dacHandle->Instance==DAC1)
+  if(tim_baseHandle->Instance==TIM6)
   {
-  /* USER CODE BEGIN DAC1_MspDeInit 0 */
+  /* USER CODE BEGIN TIM6_MspDeInit 0 */
 
-  /* USER CODE END DAC1_MspDeInit 0 */
+  /* USER CODE END TIM6_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_DAC1_CLK_DISABLE();
-  
-    /**DAC1 GPIO Configuration    
-    PA4     ------> DAC1_OUT1 
-    */
-    HAL_GPIO_DeInit(A_out1_GPIO_Port, A_out1_Pin);
+    __HAL_RCC_TIM6_CLK_DISABLE();
 
-    /* DAC1 interrupt Deinit */
-  /* USER CODE BEGIN DAC1:TIM6_DAC_IRQn disable */
+    /* TIM6 interrupt Deinit */
+  /* USER CODE BEGIN TIM6:TIM6_DAC_IRQn disable */
     /**
     * Uncomment the line below to disable the "TIM6_DAC_IRQn" interrupt
     * Be aware, disabling shared interrupt may affect other IPs
     */
     /* HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn); */
-  /* USER CODE END DAC1:TIM6_DAC_IRQn disable */
+  /* USER CODE END TIM6:TIM6_DAC_IRQn disable */
 
-  /* USER CODE BEGIN DAC1_MspDeInit 1 */
+  /* USER CODE BEGIN TIM6_MspDeInit 1 */
 
-  /* USER CODE END DAC1_MspDeInit 1 */
+  /* USER CODE END TIM6_MspDeInit 1 */
   }
 } 
 

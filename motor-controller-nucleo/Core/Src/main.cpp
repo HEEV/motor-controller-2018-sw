@@ -43,6 +43,7 @@
 #include "spi.h"
 #include "usart.h"
 #include "adc.h"
+#include "tim.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 #include "gpio.h"
@@ -171,6 +172,7 @@ int main(void)
   MX_SPI2_Init();
   MX_USART2_UART_Init();
   MX_USB_DEVICE_Init();
+  MX_TIM6_Init();
 
   //initilize, then calibrate ADC
   MX_ADC2_Init();

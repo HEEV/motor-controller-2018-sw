@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : DAC.c
+  * File Name          : TIM.h
   * Description        : This file provides code for the configuration
-  *                      of the DAC instances.
+  *                      of the TIM instances.
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -46,105 +46,39 @@
   *
   ******************************************************************************
   */
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __tim_H
+#define __tim_H
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "dac.h"
+#include "stm32f3xx_hal.h"
+#include "main.h"
 
-#include "gpio.h"
+/* USER CODE BEGIN Includes */
 
-/* USER CODE BEGIN 0 */
+/* USER CODE END Includes */
 
-/* USER CODE END 0 */
+extern TIM_HandleTypeDef htim6;
 
-DAC_HandleTypeDef hdac1;
+/* USER CODE BEGIN Private defines */
 
-/* DAC1 init function */
-void MX_DAC1_Init(void)
-{
-  DAC_ChannelConfTypeDef sConfig;
+/* USER CODE END Private defines */
 
-    /**DAC Initialization 
-    */
-  hdac1.Instance = DAC1;
-  if (HAL_DAC_Init(&hdac1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+extern void _Error_Handler(char *, int);
 
-    /**DAC channel OUT1 config 
-    */
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
-  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
-  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+void MX_TIM6_Init(void);
 
+/* USER CODE BEGIN Prototypes */
+
+/* USER CODE END Prototypes */
+
+#ifdef __cplusplus
 }
-
-void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
-{
-
-  GPIO_InitTypeDef GPIO_InitStruct;
-  if(dacHandle->Instance==DAC1)
-  {
-  /* USER CODE BEGIN DAC1_MspInit 0 */
-
-  /* USER CODE END DAC1_MspInit 0 */
-    /* DAC1 clock enable */
-    __HAL_RCC_DAC1_CLK_ENABLE();
-  
-    /**DAC1 GPIO Configuration    
-    PA4     ------> DAC1_OUT1 
-    */
-    GPIO_InitStruct.Pin = A_out1_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(A_out1_GPIO_Port, &GPIO_InitStruct);
-
-    /* DAC1 interrupt Init */
-    HAL_NVIC_SetPriority(TIM6_DAC_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
-  /* USER CODE BEGIN DAC1_MspInit 1 */
-
-  /* USER CODE END DAC1_MspInit 1 */
-  }
-}
-
-void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
-{
-
-  if(dacHandle->Instance==DAC1)
-  {
-  /* USER CODE BEGIN DAC1_MspDeInit 0 */
-
-  /* USER CODE END DAC1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_DAC1_CLK_DISABLE();
-  
-    /**DAC1 GPIO Configuration    
-    PA4     ------> DAC1_OUT1 
-    */
-    HAL_GPIO_DeInit(A_out1_GPIO_Port, A_out1_Pin);
-
-    /* DAC1 interrupt Deinit */
-  /* USER CODE BEGIN DAC1:TIM6_DAC_IRQn disable */
-    /**
-    * Uncomment the line below to disable the "TIM6_DAC_IRQn" interrupt
-    * Be aware, disabling shared interrupt may affect other IPs
-    */
-    /* HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn); */
-  /* USER CODE END DAC1:TIM6_DAC_IRQn disable */
-
-  /* USER CODE BEGIN DAC1_MspDeInit 1 */
-
-  /* USER CODE END DAC1_MspDeInit 1 */
-  }
-} 
-
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
+#endif
+#endif /*__ tim_H */
 
 /**
   * @}
