@@ -84,9 +84,6 @@ void SystemClock_Config(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-  HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
-}
 
 // ADC conversion code
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
@@ -185,6 +182,12 @@ int main(void)
 
   mc_settings.MotorType = MotorType_t::BLDC_MOTOR;
   mc_settings.PolePairs_KV = 7;
+
+  mc_settings.HallMode.HallPolarity = 1;
+  mc_settings.HallMode.HallInterpolate = 1;
+  mc_settings.HallMode.HallDirection = 0;
+  mc_settings.HallElecOffset = -10000;
+  mc_settings.HallMechOffset = 0;
 
   /* MCU Configuration----------------------------------------------------------*/
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */

@@ -12,7 +12,7 @@ using uint32_t = std::uint32_t;
 extern SPI_HandleTypeDef *TMC4671_SPI;
 
 // define some helper functions (implemented after the class function implementations)
-static void hall_effect_init();
+static void hall_effect_init(const MotorControllerSettings_t &motor_settings);
 static void adc_init();
 static void pwm_init();
 
@@ -35,7 +35,6 @@ TMC4671Interface::TMC4671Interface(const MotorControllerSettings_t *settings)
   // initilize important TMC4671 registers
   pwm_init();
   adc_init();
-  hall_effect_init();
 
   // intilize variables
   ControlMode = ControlMode_t::VELOCITY;
@@ -49,8 +48,10 @@ TMC4671Interface::TMC4671Interface(const MotorControllerSettings_t *settings)
 
 void TMC4671Interface::change_settings(const MotorControllerSettings_t *settings) 
 {
-  // go through the settings, update the TMC4671 (or internal state) based on them
+  // initilize hall effect sensors
+  hall_effect_init(*settings);
 
+  // go through the settings, update the TMC4671 (or internal state) based on them
   Direction = settings->MotorDir;
 
   const uint8_t motor_type = static_cast<uint8_t>(settings->MotorType);
@@ -147,17 +148,20 @@ void TMC4671Interface::disable(){
 // -------------------------------- Helper functions -------------------------
 
 // Initilize hall TMC4671 hall effect registers 
-static void hall_effect_init()
+static void hall_effect_init(const MotorControllerSettings_t &motor_settings)
 {
   // stuff to setup hall effect sensors here (default config good for now)
   const uint32_t HALL_POSITION[] = {0x55557FFF, 0x00012AAB, 0xAAADD557};
-  const uint16_t ELECTRICAL_OFFSET = -10000;
-  const uint16_t MECHANICAL_OFFSET = 0x0000;
-  const uint32_t HALL_OFFSET = (ELECTRICAL_OFFSET << 16) | MECHANICAL_OFFSET;
   const uint32_t MAX_INTERPOLATION = 0x00002AAA;
 
+  uint32_t HALL_OFFSET = (motor_settings.HallElecOffset << 16) | motor_settings.HallMechOffset;
+
+  uint32_t HALL_MODE = (motor_settings.HallMode.HallDirection << 3) 
+                     | (motor_settings.HallMode.HallInterpolate << 2)
+                     | (motor_settings.HallMode.HallPolarity);
+
   // turn on interpolation, and reverse polarity 
-  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_MODE, 0x00000101);
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_MODE, HALL_MODE);
 
   // define the "position" of the rotor with each hall effect pulse
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_POSITION_060_000, HALL_POSITION[0]);

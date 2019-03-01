@@ -31,13 +31,23 @@ enum class MotorControllerParameter_t : std::uint8_t {
     MOTOR_DIRECTION = 0,
     MOTOR_MODE,                     /// Control mode (Velocity, Torque, or Open-loop)
     SETPOINT,                       /// The setpoint for the motor (RPM for velocity and open-loop, mA for Torque)
+
     // motor current, velocity, and acceleration limits
     CURRENT_LIMIT,                  /// Sets the limit on the maximum current avalible to the motor
     VELOCITY_LIMIT,                 /// Sets the maximum RPM of the motor
     ACCELERATION_LIMIT,             /// Sets the the maximum acceleration of the motor RPM/sec
+
     // motor setup fields
     MOTOR_TYPE,                     /// what type of motor is connected, 0 for BLDC, 1 for brushed
     POLE_PAIRS_KV,                  /// number of poles in a BLDC motor or the Motor constant for a brushed motor
+    
+    // hall effect sensor setup
+    HALL_POLARITY,                  /// Is rising or falling edge of the hall effect sensor is the correct one
+    HALL_INTERPOLATE,               /// After a certain RPM, should the readings be interpolated
+    HALL_DIRECTION,                 /// Are the the sensors direction 180 degrees from the motor phases
+    HALL_MECH_OFFSET,               /// Hall effect sensors offset from the mechanical angle
+    HALL_ELEC_OFFSET,               /// Hall effect sensors offset from the electrial angle 
+
     // open loop settings
     OPEN_LOOP_MODE_ENABLED,         /// startup in open loop mode 
     OPEN_LOOP_TRANSITION_VELOCITY,  /// RPM to transition from open loop to closed loop mode
@@ -86,6 +96,15 @@ struct MotorControllerSettings_t {
     std::uint16_t       CurrentLimit;
     std::uint32_t       VelocityLimit;
     std::uint32_t       AccelerationLimit;
+
+    struct {
+        std::uint8_t    HallPolarity    : 1;
+        std::uint8_t    HallInterpolate : 1;
+        std::uint8_t    HallDirection   : 1;
+    } HallMode;
+
+    std::int16_t        HallMechOffset;
+    std::int16_t        HallElecOffset;
 
     MotorType_t         MotorType;
     std::uint8_t        PolePairs_KV;

@@ -119,6 +119,28 @@ void ComputerInterface::copy_setting(MotorControllerPacket_t &packet, MotorContr
     else { settings.PolePairs_KV = packet.u8; }
     break;
 
+  // Hall effect settings
+  case MotorParams::HALL_POLARITY:
+    if (!toSettings) { packet.u8 = settings.HallMode.HallPolarity; }
+    else { settings.HallMode.HallPolarity = (packet.u8 != 0); }
+    break;
+  case MotorParams::HALL_INTERPOLATE:
+    if (!toSettings) { packet.u8 = settings.HallMode.HallInterpolate; }
+    else { settings.HallMode.HallInterpolate = (packet.u8 != 0); }
+    break;
+  case MotorParams::HALL_DIRECTION:
+    if (!toSettings) { packet.u8 = settings.HallMode.HallDirection; }
+    else { settings.HallMode.HallDirection = (packet.u8 != 0); }
+    break;
+  case MotorParams::HALL_MECH_OFFSET:
+    if (!toSettings) { packet.i16 = settings.HallMechOffset; }
+    else { settings.HallMechOffset = packet.i16; }
+    break;
+  case MotorParams::HALL_ELEC_OFFSET:
+    if (!toSettings) { packet.i16 = settings.HallElecOffset; }
+    else { settings.HallElecOffset = packet.i16; }
+    break;
+
   // open loop settings
   case MotorParams::OPEN_LOOP_MODE_ENABLED: /// startup in open loop mode
     if (!toSettings) { packet.u8 = settings.OpenStartup; }
