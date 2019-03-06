@@ -30,13 +30,24 @@ public:
     void change_settings(const MotorControllerSettings_t *settings);
 
     /**
-     * Selects from Velocity, Torque, or
-     * open loop modes of operation.
+     * Selects from Velocity, Torque, or open loop modes of operation.
+     * This immediately sends a command to change modes to the 4671,
+     * so you should immediately follow it up with a call to set_setpoint.
+     * 
+     * This should probably only be called when the setpoint is zero,
+     * but it will probably work otherwise.
      */
     void set_control_mode(ControlMode_t mode); 
 
     /**
      * Sets the motor direction either forward or reverse. 
+     * 
+     * This immediately reverses the direction, the only limit to the
+     * speed is the current limit set by the MotorControllerSettings_t struct,
+     * should probably only be changed when the setpoint is at or near zero.
+     * 
+     * Luckily, an electric vehicle shouldn't be changing directions
+     * very often :-)
      */
     void set_direction(MotorDirection_t dir);
 
@@ -52,7 +63,18 @@ public:
      */
     void set_setpoint(std::int32_t set_point);
 
+    /**
+     * Enable the TMC4671 (turns on outputs to the power stage)
+     * This function sets the enable pin on the microcontroller which
+     * connects to the enable pin on the TMC4671.
+     */
     void enable();
+
+    /**
+     * Disable the TMC4671 (turns off the outputs to the power stage)
+     * This function resets the enable pin on the microcontroller which
+     * connects to the enable pin on the TMC4671.
+     */
     void disable();
 
     // disallow default initilization and copying
@@ -61,10 +83,17 @@ public:
     TMC4671Interface operator=(const TMC4671Interface &rhs) = delete;
 
 private:
+    /// Class state for the direction of the motor
     MotorDirection_t Direction;
+
+    /// Class state for the setpoint for the controller.
     std::int32_t Setpoint;
+
+    /// Class state for the control mode (Velocity, Torque, or Open-loop)
     ControlMode_t ControlMode;
 
+    /// Motor constant for the motor 
+    ///(multiplication factor for setting the setpoint in velocity mode)
     std::uint16_t MotorConstant;
 
     // default values for the tmc4671 on startup

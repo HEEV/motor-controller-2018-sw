@@ -85,7 +85,13 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN 0 */
 
-// ADC conversion code
+/** ADC conversion code
+ * This is the callback function from HAL_ADC_Start_IT, it is called for both
+ * ADC1 and ADC2. The function checks which ADC initiated the interrupt, then
+ * it finds which channel was converted by means of a static iteration variable.
+ * (A static variable is defined in the function, but holds its value over multiple
+ * function calls.) 
+ */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
   static int8_t adc1_conv_count = 0;
