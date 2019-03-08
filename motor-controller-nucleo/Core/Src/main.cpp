@@ -207,10 +207,10 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USB_DEVICE_Init();
   MX_TIM6_Init();
-
-  //initilize, then calibrate ADCs
   MX_ADC2_Init();
   MX_ADC1_Init();
+
+  // Calibrate ADCs (the datasheet says this is a good idea)
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 
@@ -228,6 +228,14 @@ int main(void)
   uint32_t time = 0;
   uint32_t prev_time = 0;
 
+  // Use some variables as counters.
+  // These variable should be read as milisecond count 50, and milisecond count 100 respectively.
+  // Counter variables are used because of their increased reliablitiy over simply using the mod
+  // operator on the time variable (i.e. time % 100 == 0). This is because the time variable
+  // might not get updated exactly every milisecond (or the main loop doesn't quite run that fast).
+  // This will cause some missed updates or double updates.
+  // The counter variable solves this by triggering when it is at or above the ammount of time required,
+  // then clearing once the event has happened.
   int8_t ms_cnt50 = 0;
   int8_t ms_cnt100 = 0;
 
@@ -241,7 +249,7 @@ int main(void)
   HAL_TIM_Base_Start(&htim6);
 
   while (1) {
-    // get the current time
+    // Get the time difference (if this stops working for some reason put in a 1ms delay)
     prev_time = time;
     time = HAL_GetTick();
     uint8_t time_diff = static_cast<uint8_t> (time - prev_time);
@@ -259,6 +267,7 @@ int main(void)
     }
     if (ms_cnt100 >= 100) {
 
+      /*
       strcpy(buff1, "\f\r");
       __itoa(Throttle_ADCVal, tmpBuff, 10);
       strcat(buff1, tmpBuff);
@@ -279,6 +288,9 @@ int main(void)
       __itoa(TransistorTemp_ADCVal, tmpBuff, 10);
       strcat(buff1, tmpBuff);
       CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
+      */
+     comp_interface.display_settings();
+
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
 
