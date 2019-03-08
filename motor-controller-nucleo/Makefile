@@ -48,9 +48,11 @@ tmc/ic/TMC4671/TMC4671.c \
 tmc/helpers/CRC.c \
 tmc/helpers/Functions.c \
 tmc/helpers/LinearRamp.c \
+Core/Src/tiny_printf.c \
 Core/Src/adc.c \
 Core/Src/can.c \
 Core/Src/dac.c \
+Core/Src/flash.c \
 Core/Src/gpio.c \
 Core/Src/spi.c \
 Core/Src/tim.c \
