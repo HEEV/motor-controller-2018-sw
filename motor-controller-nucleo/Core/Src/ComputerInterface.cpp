@@ -1,5 +1,17 @@
 #include "ComputerInterface.h"
 #include <stm32f3xx_hal.h>
+
+// for tfp_sprintf()
+#define PRINTF_LONG_SUPPORT
+
+#ifdef __cplusplus
+extern "C" {
+  #include "tiny_printf.h"
+}
+#else
+  #include "tiny_printf.h"
+#endif
+
 // from USB_DEVICE/App directory
 #include <usbd_cdc_if.h>
 
@@ -56,6 +68,101 @@ void ComputerInterface::change_setting(MotorControllerPacket_t &packet)
  */
 void ComputerInterface::recieve_packet(MotorControllerPacket_t &packet)
 {
+}
+
+
+void ComputerInterface::display_settings()
+{
+  // Make my buffer the same length as the USB buffer (defined in usbd_cdc_if.c)
+  const uint8_t BUFFSIZE = 128; // same length as the USB buffer
+  char buff[BUFFSIZE] = {0};
+  
+  char enum_name[10];
+  switch(Settings->MotorDir)
+  {
+    default:
+    case MotorDirection_t::FORWARD:
+      strcpy(enum_name, "Forward");
+      break;
+    case MotorDirection_t::REVERSE:
+      strcpy(enum_name, "Reverse");
+      break;
+  } 
+  sprintf(buff, 
+  "\fMotor Settings\n"
+  "Motor Direction: %s\n", enum_name);
+  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+
+  switch(Settings->ControlMode)
+  {
+    default:
+    case ControlMode_t::VELOCITY:
+      strcpy(enum_name, "Velocity");
+      break;
+    case ControlMode_t::TORQUE:
+      strcpy(enum_name, "Torque");
+      break;
+    case ControlMode_t::OPEN_LOOP:
+      strcpy(enum_name, "Open Loop");
+      break;
+  } 
+
+  #warning("Should probably add units here")
+  sprintf(buff, 
+  "Control Mode: %s\n"
+  "Setpoint: %ld\n" // I should add units here
+  "Current Limit: %d mA\n",
+  enum_name, Settings->Setpoint, Settings->CurrentLimit);
+  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+
+  sprintf(buff, 
+  "Velocity Limit: %d RPM\n"
+  "Acceleration Limit: %lu RPM/sec\n",
+  Settings->CurrentLimit, Settings->AccelerationLimit);
+  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+  
+  // make a lambda function to convert a bit slice into a string
+  auto bit2Str = [](uint8_t bit) { return bit ? "On" : "Off";};
+
+  // Print the hall effect settings
+  sprintf(buff, 
+  "Hall effect sensor settings:"
+  "Invert Hall Polarity: %s\n"
+  "Interpolate Hall Readings: %s\n"
+  "Reverse Hall Direction: %s\n",
+  bit2Str(Settings->HallMode.HallPolarity), 
+  bit2Str(Settings->HallMode.HallInterpolate),
+  bit2Str(Settings->HallMode.HallDirection)); 
+  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+
+  sprintf(buff, 
+  "Hall Mechanical Offset: %d\n"
+  "Hall Electrical Offset: %d\n",
+  Settings->HallMechOffset, Settings->HallElecOffset);
+  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+
+  // Print the open loop settings
+  sprintf(buff, 
+  "Open Loop Settings\n"
+  "Open Loop Startup: %s\n",
+  bit2Str(Settings->OpenStartup));
+  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+
+  sprintf(buff, 
+  "Open Loop Transistion: %u RPM\n"
+  "Open Loop Acceleration: %u RPM/sec\n"
+  "Open Loop Velocity: %u RPM\n",
+  Settings->OpenTransistionVel,
+  Settings->OpenAccel,
+  Settings->OpenVel);
+  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+
+  sprintf(buff, 
+  "Open Loop Max Current: %lu mA\n"
+  "Open Loop Max Voltage: %u V\n",
+  Settings->OpenMaxI,
+  Settings->OpenMaxV);
+  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
 }
 
 /**

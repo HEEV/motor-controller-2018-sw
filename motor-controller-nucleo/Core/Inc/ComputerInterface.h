@@ -138,6 +138,8 @@ public:
      */
     void recieve_packet(MotorControllerPacket_t &packet);
 
+    void display_settings();
+
     // disallow default initilization and copying
     ComputerInterface() = delete;
     ComputerInterface(const ComputerInterface &cpy) = delete;
