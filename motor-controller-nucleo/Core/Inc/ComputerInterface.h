@@ -20,7 +20,22 @@
 #ifndef SERIAL_INTERFACE_H_
 #define SERIAL_INTERFACE_H_
 
+#ifdef __cplusplus
 #include <cstdint>
+extern "C" {
+#else
+#include <stdint.h>
+#endif
+
+// wrapper for ComputerInterface::add_to_buffer()
+void computerInterface_update_buffer(void* comp_iface, const uint8_t *buff, uint32_t len);
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+#include <array>
 
 #ifndef PC_INTERFACE
 #define PC_INTERFACE UART
@@ -125,7 +140,7 @@ public:
      * Send the current value of one of the motor controller settings to the host PC
      * The input to the function is the parameter that should be transmitted
      */
-    void transmit_setting(MotorControllerParameter_t param);
+    void transmit_setting(MotorControllerParameter_t param) const;
 
     /**
      * Change one of the motor controller settings based on a packet (assumed to have
@@ -134,9 +149,13 @@ public:
     void change_setting(MotorControllerPacket_t &packet);
     /**
      * This function is meant to be called from the interrupt service routine for
-     * the serial device in stm32f3xx_it.c.
+     * the serial device in stm32f3xx_it.c or usb_cdc_if.c.
      */
     void recieve_packet(MotorControllerPacket_t &packet);
+
+    //MotorControllerPacket_t parse_command
+
+    void add_to_buffer(const std::uint8_t* buff, uint32_t len);
 
     void display_settings();
 
@@ -145,13 +164,15 @@ public:
     ComputerInterface(const ComputerInterface &cpy) = delete;
     ComputerInterface operator=(const ComputerInterface &rhs) = delete;
 private:
-    void transmit_packet(const MotorControllerPacket_t &packet);
+    void transmit_packet(const MotorControllerPacket_t &packet) const;
 
     // uses the rw_address in packet to determine the parameter to be copied. if toSettings is true
     // then the value is copied from packet into settings, otherwise it is copied from settings into packet
     static void copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings);
 
     MotorControllerSettings_t* Settings;
+    std::array<char, 64> command_buff = {0};
+    std::uint8_t command_len = 0;
 };
-
+#endif // __cplusplus
 #endif // SERIAL_INTERFACE_H_

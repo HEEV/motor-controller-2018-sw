@@ -12,8 +12,11 @@ extern "C" {
   #include "tiny_printf.h"
 #endif
 
+#define my_sprintf sprintf
+
 // from USB_DEVICE/App directory
 #include <usbd_cdc_if.h>
+#include <algorithm>
 
 // define commonly used types
 using int8_t = std::int8_t;
@@ -25,6 +28,13 @@ using uint32_t = std::uint32_t;
 
 extern UART_HandleTypeDef huart2;
 
+// wrapper for a class function
+void computerInterface_update_buffer(void* piface, const uint8_t* buff, uint32_t len)
+{
+  auto hcomp_iface = reinterpret_cast<ComputerInterface*>(piface);
+  hcomp_iface->add_to_buffer(buff, len);
+}
+
 ComputerInterface::ComputerInterface(MotorControllerSettings_t *Settings_)
 {
   //keep the address of the settings
@@ -35,7 +45,7 @@ ComputerInterface::ComputerInterface(MotorControllerSettings_t *Settings_)
  * Send the current value of one of the motor controller settings to the host PC
  * The input to the function is the parameter that should be transmitted
  */
-void ComputerInterface::transmit_setting(MotorControllerParameter_t param)
+void ComputerInterface::transmit_setting(MotorControllerParameter_t param) const
 {
   MotorControllerPacket_t packet;
 
@@ -70,6 +80,21 @@ void ComputerInterface::recieve_packet(MotorControllerPacket_t &packet)
 {
 }
 
+void ComputerInterface::add_to_buffer(const std::uint8_t* buff, std::uint32_t len)
+{
+  // find the length of buffer to add to the command buffer
+  // only copy the bits that fit into the commend buffer
+  auto cpy_len = (command_len + len >= command_buff.size()) 
+      ? command_buff.size() - command_len : len;
+
+  command_len += cpy_len;
+
+  // copy the buffer into command_buff
+  std::copy_n(buff, cpy_len, &command_buff[command_len]);
+
+  // make sure we are null terminated
+  command_buff.back() = '\0';
+}
 
 void ComputerInterface::display_settings()
 {
@@ -88,7 +113,7 @@ void ComputerInterface::display_settings()
       strcpy(enum_name, "Reverse");
       break;
   } 
-  sprintf(buff, 
+  my_sprintf(buff, 
   "\fMotor Settings\n"
   "Motor Direction: %s\n", enum_name);
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
@@ -108,14 +133,14 @@ void ComputerInterface::display_settings()
   } 
 
   #warning("Should probably add units here")
-  sprintf(buff, 
+  my_sprintf(buff, 
   "Control Mode: %s\n"
   "Setpoint: %ld\n" // I should add units here
   "Current Limit: %d mA\n",
   enum_name, Settings->Setpoint, Settings->CurrentLimit);
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
 
-  sprintf(buff, 
+  my_sprintf(buff, 
   "Velocity Limit: %d RPM\n"
   "Acceleration Limit: %lu RPM/sec\n",
   Settings->CurrentLimit, Settings->AccelerationLimit);
@@ -125,7 +150,7 @@ void ComputerInterface::display_settings()
   auto bit2Str = [](uint8_t bit) { return bit ? "On" : "Off";};
 
   // Print the hall effect settings
-  sprintf(buff, 
+  my_sprintf(buff, 
   "Hall effect sensor settings:"
   "Invert Hall Polarity: %s\n"
   "Interpolate Hall Readings: %s\n"
@@ -135,20 +160,20 @@ void ComputerInterface::display_settings()
   bit2Str(Settings->HallMode.HallDirection)); 
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
 
-  sprintf(buff, 
+  my_sprintf(buff, 
   "Hall Mechanical Offset: %d\n"
   "Hall Electrical Offset: %d\n",
   Settings->HallMechOffset, Settings->HallElecOffset);
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
 
   // Print the open loop settings
-  sprintf(buff, 
+  my_sprintf(buff, 
   "Open Loop Settings\n"
   "Open Loop Startup: %s\n",
   bit2Str(Settings->OpenStartup));
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
 
-  sprintf(buff, 
+  my_sprintf(buff, 
   "Open Loop Transistion: %u RPM\n"
   "Open Loop Acceleration: %u RPM/sec\n"
   "Open Loop Velocity: %u RPM\n",
@@ -157,7 +182,7 @@ void ComputerInterface::display_settings()
   Settings->OpenVel);
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
 
-  sprintf(buff, 
+  my_sprintf(buff, 
   "Open Loop Max Current: %lu mA\n"
   "Open Loop Max Voltage: %u V\n",
   Settings->OpenMaxI,
@@ -168,7 +193,7 @@ void ComputerInterface::display_settings()
 /**
  * Write a packet to the host PC using either the USB or USART interface
  */
-void ComputerInterface::transmit_packet(const MotorControllerPacket_t &packet)
+void ComputerInterface::transmit_packet(const MotorControllerPacket_t &packet) const
 {
   const uint8_t *packetPtr = reinterpret_cast<const uint8_t *>(&packet);
   const uint16_t packetSz = static_cast<uint16_t>(sizeof(MotorControllerPacket_t));

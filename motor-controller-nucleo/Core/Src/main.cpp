@@ -65,6 +65,7 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef *TMC4671_SPI;
+void* hcomp_iface;
 
 // global variables for the analog inputs
 static volatile uint16_t Throttle_ADCVal;
@@ -201,11 +202,10 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-  /* Initialize all configured peripherals */
+  /* Initialize most configured peripherals */
   MX_GPIO_Init();
   MX_SPI2_Init();
   MX_USART2_UART_Init();
-  MX_USB_DEVICE_Init();
   MX_TIM6_Init();
   MX_ADC2_Init();
   MX_ADC1_Init();
@@ -217,10 +217,15 @@ int main(void)
   //set the interface the TMC4671 uses (defined in spi.c)
   TMC4671_SPI = &hspi2;
 
-  // setup the two main interfaces
+  // setup the two main hardware interfaces
   ComputerInterface comp_interface(&mc_settings);
   TMC4671Interface  tmc4671(&mc_settings);
-  tmc4671.enable();
+
+  // initilize pointer for the USB interface
+  hcomp_iface = &comp_interface;
+
+  // initilize USB
+  MX_USB_DEVICE_Init();
 
   int32_t target_velocity = 0;
   char buff1[128] = {0};
@@ -248,6 +253,8 @@ int main(void)
   // start the ADC conversion trigger timer
   HAL_TIM_Base_Start(&htim6);
 
+  // enable the outputs from the tmc4671
+  tmc4671.enable();
   while (1) {
     // Get the time difference (if this stops working for some reason put in a 1ms delay)
     prev_time = time;
