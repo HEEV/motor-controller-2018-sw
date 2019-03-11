@@ -67,6 +67,7 @@
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef *TMC4671_SPI;
 CanNode  *mc_node_ptr;
+void* hcomp_iface;
 
 // global variables for the analog inputs
 static volatile uint16_t Throttle_ADCVal;
@@ -109,7 +110,13 @@ int thermistorTemperature(uint16_t adcVal)
   return tempurature;
 }
 
-// ADC conversion code
+/** ADC conversion code
+ * This is the callback function from HAL_ADC_Start_IT, it is called for both
+ * ADC1 and ADC2. The function checks which ADC initiated the interrupt, then
+ * it finds which channel was converted by means of a static iteration variable.
+ * (A static variable is defined in the function, but holds its value over multiple
+ * function calls.) 
+ */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
   static int8_t adc1_conv_count = 0;
@@ -219,16 +226,15 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-  /* Initialize all configured peripherals */
+  /* Initialize most configured peripherals */
   MX_GPIO_Init();
   MX_SPI2_Init();
   MX_USART2_UART_Init();
-  MX_USB_DEVICE_Init();
   MX_TIM6_Init();
-
-  //initilize, then calibrate ADCs
   MX_ADC2_Init();
   MX_ADC1_Init();
+
+  // Calibrate ADCs (the datasheet says this is a good idea)
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 
@@ -238,10 +244,15 @@ int main(void)
   //set the interface the TMC4671 uses (defined in spi.c)
   TMC4671_SPI = &hspi2;
 
-  // setup the two main interfaces
+  // setup the two main hardware interfaces
   ComputerInterface comp_interface(&mc_settings);
   TMC4671Interface  tmc4671(&mc_settings);
-  tmc4671.enable();
+
+  // initilize pointer for the USB interface
+  hcomp_iface = &comp_interface;
+
+  // initilize USB
+  MX_USB_DEVICE_Init();
 
   int32_t target_velocity = 0;
   char buff1[128] = {0};
@@ -249,6 +260,14 @@ int main(void)
   uint32_t time = 0;
   uint32_t prev_time = 0;
 
+  // Use some variables as counters.
+  // These variable should be read as milisecond count 50, and milisecond count 100 respectively.
+  // Counter variables are used because of their increased reliablitiy over simply using the mod
+  // operator on the time variable (i.e. time % 100 == 0). This is because the time variable
+  // might not get updated exactly every milisecond (or the main loop doesn't quite run that fast).
+  // This will cause some missed updates or double updates.
+  // The counter variable solves this by triggering when it is at or above the ammount of time required,
+  // then clearing once the event has happened.
   int8_t ms_cnt50 = 0;
   int8_t ms_cnt100 = 0;
 
@@ -261,8 +280,10 @@ int main(void)
   // start the ADC conversion trigger timer
   HAL_TIM_Base_Start(&htim6);
 
+  // enable the outputs from the tmc4671
+  tmc4671.enable();
   while (1) {
-    // get the current time
+    // Get the time difference (if this stops working for some reason put in a 1ms delay)
     prev_time = time;
     time = HAL_GetTick();
     uint8_t time_diff = static_cast<uint8_t> (time - prev_time);
@@ -280,6 +301,7 @@ int main(void)
     }
     if (ms_cnt100 >= 100) {
 
+      /*
       strcpy(buff1, "\f\r");
       __itoa(Throttle_ADCVal, tmpBuff, 10);
       strcat(buff1, tmpBuff);
@@ -300,6 +322,9 @@ int main(void)
       __itoa(thermistorTemperature(TransistorTemp_ADCVal), tmpBuff, 10);
       strcat(buff1, tmpBuff);
       CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
+      */
+     comp_interface.display_settings();
+
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
 

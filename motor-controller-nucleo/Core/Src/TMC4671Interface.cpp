@@ -22,6 +22,7 @@ extern "C" {
   u8 tmc4671_readwriteByte(u8 motor, u8 data, u8 lastTransfer);
 }
 
+// detailed documentation in the .h file
 TMC4671Interface::TMC4671Interface(const MotorControllerSettings_t *settings)
 {
   // get the TMC4671 into a known state
@@ -46,6 +47,7 @@ TMC4671Interface::TMC4671Interface(const MotorControllerSettings_t *settings)
   change_settings(settings);
 }
 
+// detailed information in the .h file
 void TMC4671Interface::change_settings(const MotorControllerSettings_t *settings) 
 {
   // initilize hall effect sensors
@@ -56,7 +58,8 @@ void TMC4671Interface::change_settings(const MotorControllerSettings_t *settings
 
   const uint8_t motor_type = static_cast<uint8_t>(settings->MotorType);
 
-  // Use the Pole-pairs/motor constant as the motor constant
+  // Use the Pole-pairs as the motor constant if this is a BLDC motor. This might be stupid.
+  // If this is a brushed motor, then this will be the KV constant (RPM/voltage) of the motor 
   MotorConstant = settings->PolePairs_KV;
 
   // if using a brushed motor, there is always only one pole. ALWAYS!!!
@@ -73,14 +76,13 @@ void TMC4671Interface::change_settings(const MotorControllerSettings_t *settings
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_VELOCITY_LIMIT, MotorConstant*settings->VelocityLimit);
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_ACCELERATION_LIMIT, MotorConstant*settings->AccelerationLimit);
 
-  // set the mode of the motor controller
+  // now initilize the settings that will be changed the most frequently
   set_control_mode(settings->ControlMode);
-  // set the motor direction
   set_direction(settings->MotorDir);
-  // set the setpoint
   set_setpoint(settings->Setpoint);
 }
 
+// documented in the .h file
 void TMC4671Interface::set_control_mode(ControlMode_t mode) 
 {
   uint8_t tmc_mode = TMC4671_MOTION_MODE_VELOCITY; 
@@ -105,6 +107,7 @@ void TMC4671Interface::set_control_mode(ControlMode_t mode)
   tmc4671_switchToMotionMode(TMC_DEFAULT_MOTOR, tmc_mode);
 }
 
+// documented in the .h file
 void TMC4671Interface::set_direction(MotorDirection_t dir)
 {
   Direction = dir;
@@ -112,6 +115,7 @@ void TMC4671Interface::set_direction(MotorDirection_t dir)
   set_setpoint(Setpoint);
 }
 
+// documented int the .h file
 void TMC4671Interface::set_setpoint(int32_t set_point)
 {
   // take the absolute value of the set point (direction determined by the Direction variable)
@@ -137,17 +141,25 @@ void TMC4671Interface::set_setpoint(int32_t set_point)
   }
 }
 
+// documented in the .h file
 void TMC4671Interface::enable()
 {
   HAL_GPIO_WritePin(TMC4671_EN_GPIO_Port, TMC4671_EN_Pin, GPIO_PIN_SET);
 }
+
+// documented in the .h file
 void TMC4671Interface::disable(){
   HAL_GPIO_WritePin(TMC4671_EN_GPIO_Port, TMC4671_EN_Pin, GPIO_PIN_RESET);
 }
 
 // -------------------------------- Helper functions -------------------------
 
-// Initilize hall TMC4671 hall effect registers 
+/** Initilize hall TMC4671 hall effect registers 
+ * This is a helper function to initilize the hall effect sensors. The function
+ * takes the motor controller settings as an input, because the electrical and
+ * mechanical offsets are dependent on the motor used, and therefore need to
+ * be easily modifiable by the end user. 
+ */
 static void hall_effect_init(const MotorControllerSettings_t &motor_settings)
 {
   // stuff to setup hall effect sensors here (default config good for now)
