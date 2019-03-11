@@ -49,6 +49,7 @@
 #include "gpio.h"
 
 #include <cstring>
+#include <cmath>
 
 #include <CanNode.h>
 #include <helpers/API_Header.h>
@@ -65,6 +66,7 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef *TMC4671_SPI;
+CanNode  *mc_node_ptr;
 
 // global variables for the analog inputs
 static volatile uint16_t Throttle_ADCVal;
@@ -78,12 +80,34 @@ static volatile uint16_t TransistorTemp_ADCVal;
 void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
-//void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc);
+int thermistorTemperature(uint16_t adcVal);
+void mc_nodeRTR(CanMessage *msg);
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
+int thermistorTemperature(uint16_t adcVal)
+{
+  const float THERMISTOR_NOMINAL = 10000.0; // 10K
+  const float BCOEFFICIENT = 3950; // a number picked out of thin air
+  const auto TEMPERATURE_NOMINAL = 25;
+
+  float resistance  = (4096 / static_cast<float>(adcVal)) - 1;
+  resistance = THERMISTOR_NOMINAL / resistance;
+
+  float steinhart;
+  steinhart = resistance / THERMISTOR_NOMINAL;     // (R/Ro)
+  steinhart = log(steinhart);                  // ln(R/Ro)
+  steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
+  steinhart += 1.0 / (TEMPERATURE_NOMINAL + 273.15); // + (1/To)
+  steinhart = 1.0 / steinhart;                 // Invert
+  steinhart -= 273.15;                         // convert to C
+
+  int tempurature = steinhart * 100;
+  return tempurature;
+}
 
 // ADC conversion code
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
@@ -208,6 +232,9 @@ int main(void)
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 
+  CanNode mc_node(static_cast<CanNodeType>(1000), mc_nodeRTR);
+  mc_node_ptr = &mc_node;
+
   //set the interface the TMC4671 uses (defined in spi.c)
   TMC4671_SPI = &hspi2;
 
@@ -266,21 +293,27 @@ int main(void)
       strcat(buff1, tmpBuff);
       strcat(buff1, "\n\r");
 
-      __itoa(MotorTemp_ADCVal, tmpBuff, 10);
+      __itoa(thermistorTemperature(MotorTemp_ADCVal), tmpBuff, 10);
       strcat(buff1, tmpBuff);
       strcat(buff1, "\n\r");
 
-      __itoa(TransistorTemp_ADCVal, tmpBuff, 10);
+      __itoa(thermistorTemperature(TransistorTemp_ADCVal), tmpBuff, 10);
       strcat(buff1, tmpBuff);
       CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
+
+      mc_node_ptr->sendData_uint16(Throttle_ADCVal);
 
       //reset count
       ms_cnt100 = 0;
     }
   }
 
+}
+
+void mc_nodeRTR(CanMessage *msg){
+// do nothing
 }
 
 /**
