@@ -19,7 +19,7 @@ public:
      * Setup the TMC4671 based on the perameters provided in the Settings 
      * struct. 
      */
-    TMC4671Interface(const MotorControllerSettings_t *settings);
+    TMC4671Interface(MotorControllerSettings_t *settings);
 
 
     /**
@@ -83,6 +83,9 @@ public:
     TMC4671Interface operator=(const TMC4671Interface &rhs) = delete;
 
 private:
+    /// pointer to a settings struct
+    MotorControllerSettings_t *Settings;
+
     /// Class state for the direction of the motor
     MotorDirection_t Direction;
 

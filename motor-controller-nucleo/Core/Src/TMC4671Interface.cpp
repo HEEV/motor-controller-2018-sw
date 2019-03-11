@@ -23,7 +23,7 @@ extern "C" {
 }
 
 // detailed documentation in the .h file
-TMC4671Interface::TMC4671Interface(const MotorControllerSettings_t *settings)
+TMC4671Interface::TMC4671Interface(MotorControllerSettings_t *settings)
 {
   // get the TMC4671 into a known state
 
@@ -38,6 +38,7 @@ TMC4671Interface::TMC4671Interface(const MotorControllerSettings_t *settings)
   adc_init();
 
   // intilize variables
+  Settings = settings;
   ControlMode = ControlMode_t::VELOCITY;
   Direction   = MotorDirection_t::FORWARD;
   Setpoint    = 0;
@@ -111,6 +112,7 @@ void TMC4671Interface::set_control_mode(ControlMode_t mode)
 void TMC4671Interface::set_direction(MotorDirection_t dir)
 {
   Direction = dir;
+  Settings->MotorDir = dir;
   // Start the motor going in the new direction
   set_setpoint(Setpoint);
 }
@@ -122,6 +124,9 @@ void TMC4671Interface::set_setpoint(int32_t set_point)
   set_point = (set_point < 0) ? -set_point : set_point;
   Setpoint = (Direction == MotorDirection_t::REVERSE) ? -set_point : set_point;
   uint32_t tmc_setpoint = 0;
+
+  // update settings struct
+  Settings->Setpoint = Setpoint;
 
   switch (ControlMode) {
     default:

@@ -238,8 +238,8 @@ int main(void)
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 
-  CanNode mc_node(static_cast<CanNodeType>(1000), mc_nodeRTR);
-  mc_node_ptr = &mc_node;
+  //CanNode mc_node(static_cast<CanNodeType>(1000), mc_nodeRTR);
+  //mc_node_ptr = &mc_node;
 
   //set the interface the TMC4671 uses (defined in spi.c)
   TMC4671_SPI = &hspi2;
@@ -323,12 +323,12 @@ int main(void)
       strcat(buff1, tmpBuff);
       CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
       */
-     comp_interface.display_settings();
+      comp_interface.display_settings();
 
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
 
-      mc_node_ptr->sendData_uint16(Throttle_ADCVal);
+      //mc_node_ptr->sendData_uint16(Throttle_ADCVal);
 
       //reset count
       ms_cnt100 = 0;
