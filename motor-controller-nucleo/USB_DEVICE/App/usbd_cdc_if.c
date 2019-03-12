@@ -294,7 +294,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   uint8_t result = USBD_OK;
   USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
 
-  //computerInterface_update_buffer(hcomp_iface, Buf, *Len);
+  computerInterface_update_buffer(hcomp_iface, Buf, *Len);
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   result = USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   *Len = (uint16_t) hcdc->RxLength;

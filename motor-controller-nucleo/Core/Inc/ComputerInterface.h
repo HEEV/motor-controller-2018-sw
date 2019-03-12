@@ -157,6 +157,8 @@ public:
 
     void add_to_buffer(const std::uint8_t* buff, uint32_t len);
 
+    void parse_command();
+
     void display_settings();
 
     // disallow default initilization and copying

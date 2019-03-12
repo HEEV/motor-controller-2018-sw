@@ -87,13 +87,36 @@ void ComputerInterface::add_to_buffer(const std::uint8_t* buff, std::uint32_t le
   auto cpy_len = (command_len + len >= command_buff.size()) 
       ? command_buff.size() - command_len : len;
 
-  command_len += cpy_len;
-
   // copy the buffer into command_buff
-  std::copy_n(buff, cpy_len, &command_buff[command_len]);
+  if(command_len < command_buff.size()){
+    std::copy_n(buff, cpy_len, &command_buff[command_len]);
+  }
+  else
+  {
+    command_buff[command_len - 2] = buff[0];
+  }
+  
+
+
+  command_len += cpy_len;
 
   // make sure we are null terminated
   command_buff.back() = '\0';
+
+  HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
+}
+
+void ComputerInterface::parse_command() 
+{
+  // check if the enter key was pressed
+  if(strpbrk(command_buff.data(), "\n\r") != nullptr)
+  {
+    // do parsing here
+
+    // clear the buffer
+    command_len = 0;
+    command_buff.fill('\0');
+  }
 }
 
 void ComputerInterface::display_settings()
@@ -138,12 +161,14 @@ void ComputerInterface::display_settings()
   "Setpoint: %ld\n" // I should add units here
   "Current Limit: %d mA\n",
   enum_name, Settings->Setpoint, Settings->CurrentLimit);
+  HAL_Delay(1);
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
 
   my_sprintf(buff, 
   "Velocity Limit: %d RPM\n"
   "Acceleration Limit: %lu RPM/sec\n",
   Settings->CurrentLimit, Settings->AccelerationLimit);
+  HAL_Delay(1);
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
   
   // make a lambda function to convert a bit slice into a string
@@ -158,14 +183,27 @@ void ComputerInterface::display_settings()
   bit2Str(Settings->HallMode.HallPolarity), 
   bit2Str(Settings->HallMode.HallInterpolate),
   bit2Str(Settings->HallMode.HallDirection)); 
+  HAL_Delay(1);
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
 
   my_sprintf(buff, 
   "Hall Mechanical Offset: %d\n"
   "Hall Electrical Offset: %d\n",
   Settings->HallMechOffset, Settings->HallElecOffset);
+  HAL_Delay(1);
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
 
+  // print the command buffer
+  HAL_Delay(1);
+  my_sprintf(buff,
+  "Command Length: %d\n"
+  "%s\n",
+  command_len,
+  command_buff.data());
+  CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
+  parse_command();
+
+  /*
   // Print the open loop settings
   my_sprintf(buff, 
   "Open Loop Settings\n"
@@ -188,6 +226,7 @@ void ComputerInterface::display_settings()
   Settings->OpenMaxI,
   Settings->OpenMaxV);
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+  */
 }
 
 /**
