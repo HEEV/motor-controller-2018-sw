@@ -152,6 +152,7 @@ AS_INCLUDES =
 
 # C includes
 C_INCLUDES =  \
+-IInterfaces \
 -ICanNode \
 -Itmc \
 -ICore/Inc \
