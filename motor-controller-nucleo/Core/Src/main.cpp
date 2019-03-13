@@ -56,6 +56,7 @@
 #include <ic/TMC4671/TMC4671.h>
 #include <ComputerInterface.h>
 #include <TMC4671Interface.h>
+#include <ComputerMenu.h>
 
 /* USER CODE BEGIN Includes */
 
