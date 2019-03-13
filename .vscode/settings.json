@@ -1,7 +1,8 @@
 {
     "files.associations": {
         "cstdint": "cpp",
-        "usbd_cdc_if.h": "c"
+        "usbd_cdc_if.h": "c",
+        "computerinterface.h": "c"
     },
     "editor.tabSize": 2
 }

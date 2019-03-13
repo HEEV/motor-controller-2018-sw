@@ -54,7 +54,7 @@
 #include <CanNode.h>
 #include <helpers/API_Header.h>
 #include <ic/TMC4671/TMC4671.h>
-#include "ComputerInterface.h"
+#include "Interfaces/ComputerInterface.h"
 #include "TMC4671Interface.h"
 
 /* USER CODE BEGIN Includes */

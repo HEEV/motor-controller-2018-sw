@@ -39,8 +39,8 @@ CXX_SOURCES = \
 CanNode/can_driver.cpp \
 CanNode/CanNode.cpp \
 Core/Src/main.cpp \
-Core/Src/ComputerInterface.cpp \
-Core/Src/TMC4671Interface.cpp
+Interfaces/ComputerInterface.cpp \
+Interfaces/TMC4671Interface.cpp
 
 # C sources
 C_SOURCES =  \
@@ -48,7 +48,7 @@ tmc/ic/TMC4671/TMC4671.c \
 tmc/helpers/CRC.c \
 tmc/helpers/Functions.c \
 tmc/helpers/LinearRamp.c \
-Core/Src/tiny_printf.c \
+Interfaces/tiny_printf.c \
 Core/Src/adc.c \
 Core/Src/can.c \
 Core/Src/dac.c \
