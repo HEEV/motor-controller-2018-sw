@@ -142,8 +142,7 @@ void ComputerInterface::display_settings()
   command_buff.data());
   CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
 
-  int temp = parse_command();
-  menu_num = (temp == -1) ? menu_num : temp;
+  menu_num = parse_command();
 
   HAL_Delay(1);
   my_sprintf(buff,

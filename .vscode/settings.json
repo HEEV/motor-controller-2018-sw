@@ -2,7 +2,11 @@
     "files.associations": {
         "cstdint": "cpp",
         "usbd_cdc_if.h": "c",
-        "computerinterface.h": "c"
+        "ComputerInterface.h": "cpp",
+        "TMC4671Interface.h": "cpp",
+        "ComputerMenu.h": "cpp",
+        "array": "cpp",
+        "string_view": "cpp"
     },
     "editor.tabSize": 2
 }

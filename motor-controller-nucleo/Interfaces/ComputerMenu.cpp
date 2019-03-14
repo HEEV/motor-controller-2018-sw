@@ -10,22 +10,27 @@ extern "C" {
 
 ComputerMenu::ComputerMenu()
 {
-  hall_setting_items[0] = MenuItem{"Up", "", nullptr, 0};
+  hall_setting_items[0] = MenuItem{"Up", "", &main_menu_items[1], 1};
   hall_setting_items[1] = MenuItem{"Hall Polatrity", "", nullptr, 0};
   hall_setting_items[2] = MenuItem{"Hall Direction", "", nullptr, 0};
   hall_setting_items[3] = MenuItem{"Mechanical Offset", "", nullptr, 0};
   hall_setting_items[4] = MenuItem{"Electrical Offset", "", nullptr, 0};
 
-  limits_menu_items[0] = MenuItem{"Up", "", nullptr, 0};
+  limits_menu_items[0] = MenuItem{"Up", "", &main_menu, 1};
   limits_menu_items[1] = MenuItem{"Max Current", "", nullptr, 0};
   limits_menu_items[2] = MenuItem{"Max Voltage", "", nullptr, 0};
   limits_menu_items[3] = MenuItem{"Max Acceleration", "", nullptr, 0};
 
-  motor_setting_items[0] = MenuItem{"Up", "", nullptr, 0};
+  motor_setting_items[0] = MenuItem{"Up", "", &main_menu, 1}; 
   motor_setting_items[1] = MenuItem{"Motor Type", "", nullptr, 0};
   motor_setting_items[2] = MenuItem{"Pole Pairs", "", nullptr, 0};
   motor_setting_items[3] = MenuItem{"Hall Effect Settings", "", hall_setting_items.data(), hall_setting_items.size()};
   motor_setting_items[4] = MenuItem{"Hall Effect Auto Setup", "", nullptr, 0};
+
+  open_loop_items[0] = MenuItem{"Up", "", &main_menu, 1};
+  open_loop_items[1] = MenuItem{"Max Current", "", nullptr, 0};
+  open_loop_items[2] = MenuItem{"Max Voltage", "", nullptr, 0};
+  open_loop_items[3] = MenuItem{"Acceleration", "", nullptr, 0};
 
   main_menu_items[0] = MenuItem{"Limits", "", limits_menu_items.data(), limits_menu_items.size()};
   main_menu_items[1] = MenuItem{"Motor Settings", "", motor_setting_items.data(), motor_setting_items.size()};
@@ -58,12 +63,18 @@ void ComputerMenu::display_menu(int menu_num)
   strcpy(buff, "\f");
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
   HAL_Delay(1);
+
   if (menu_num == -1){
     list_menu_items(*current_menu, buff);
   }
   else {
+    current_menu = current_menu->menu[menu_num].menu != nullptr ? &current_menu->menu[menu_num] : current_menu;
+
+    if (strcmp(current_menu->name_str, "Up") == 0){
+      current_menu = current_menu->menu;
+    }
+
     list_menu_items(*current_menu, buff);
-    current_menu = &current_menu->menu[menu_num];
   }
 }
 
@@ -76,7 +87,7 @@ void ComputerMenu::list_menu_items(const MenuItem& menu, char *buff) {
   my_sprintf(buff, "%s:\n\r", menu.name_str); 
   print(buff);
   std::fill(buff, buff+20, '-');
-  buff[21] = '\0';
+  buff[20] = '\0';
   strcat(buff, "\n\r");
   print(buff);
 
