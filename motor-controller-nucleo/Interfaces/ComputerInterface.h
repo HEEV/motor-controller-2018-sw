@@ -36,6 +36,7 @@ void computerInterface_update_buffer(void* comp_iface, const uint8_t *buff, uint
 
 #ifdef __cplusplus
 #include <array>
+#include "ComputerMenu.h"
 
 #ifndef PC_INTERFACE
 #define PC_INTERFACE UART
@@ -157,7 +158,7 @@ public:
 
     void add_to_buffer(const std::uint8_t* buff, uint32_t len);
 
-    void parse_command();
+    int parse_command();
 
     void display_settings();
 
@@ -175,6 +176,7 @@ private:
     MotorControllerSettings_t* Settings;
     std::array<char, 64> command_buff = {0};
     std::uint8_t command_len = 0;
+    ComputerMenu menu;
 };
 #endif // __cplusplus
 #endif // SERIAL_INTERFACE_H_

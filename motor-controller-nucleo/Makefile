@@ -40,7 +40,8 @@ CanNode/can_driver.cpp \
 CanNode/CanNode.cpp \
 Core/Src/main.cpp \
 Interfaces/ComputerInterface.cpp \
-Interfaces/TMC4671Interface.cpp
+Interfaces/TMC4671Interface.cpp \
+Interfaces/ComputerMenu.cpp
 
 # C sources
 C_SOURCES =  \

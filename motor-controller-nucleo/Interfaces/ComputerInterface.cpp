@@ -106,21 +106,51 @@ void ComputerInterface::add_to_buffer(const std::uint8_t* buff, std::uint32_t le
   HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
 }
 
-void ComputerInterface::parse_command() 
+int ComputerInterface::parse_command() 
 {
+  int menu_num = -1;
   // check if the enter key was pressed
   if(strpbrk(command_buff.data(), "\n\r") != nullptr)
   {
     // do parsing here
 
+    // we are breaking in here
+    if(sscanf(command_buff.data(), "%d", &menu_num) !=1 )
+      menu_num = -1;
+
     // clear the buffer
     command_len = 0;
     command_buff.fill('\0');
   }
+  return menu_num;
 }
 
 void ComputerInterface::display_settings()
 {
+  static int menu_num = -1;
+  const uint8_t BUFFSIZE = 128; // same length as the USB buffer
+  char buff[BUFFSIZE] = {0};
+
+  menu.display_menu(menu_num);
+
+  // print the command buffer
+  HAL_Delay(1);
+  my_sprintf(buff,
+  "Command Length: %d\n"
+  "%s\n",
+  command_len,
+  command_buff.data());
+  CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
+
+  int temp = parse_command();
+  menu_num = (temp == -1) ? menu_num : temp;
+
+  HAL_Delay(1);
+  my_sprintf(buff,
+  "%d\n", menu_num);
+  CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
+  
+  /*
   // Make my buffer the same length as the USB buffer (defined in usbd_cdc_if.c)
   const uint8_t BUFFSIZE = 128; // same length as the USB buffer
   char buff[BUFFSIZE] = {0};
@@ -202,6 +232,7 @@ void ComputerInterface::display_settings()
   command_buff.data());
   CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
   parse_command();
+  */
 
   /*
   // Print the open loop settings
