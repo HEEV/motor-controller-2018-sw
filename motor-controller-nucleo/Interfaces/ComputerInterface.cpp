@@ -17,6 +17,7 @@ extern "C" {
 // from USB_DEVICE/App directory
 #include <usbd_cdc_if.h>
 #include <algorithm>
+#include <cctype>
 
 // define commonly used types
 using int8_t = std::int8_t;
@@ -82,95 +83,126 @@ void ComputerInterface::recieve_packet(MotorControllerPacket_t &packet)
 
 void ComputerInterface::add_to_buffer(const std::uint8_t* buff, std::uint32_t len)
 {
+  // copy the characters from the buffer into the array
+  char* cpyPtr = &command_buff[command_len];
 
-  // find the length of buffer to add to the command buffer
-  // only copy the bits that fit into the commend buffer
-  auto cpy_len = (command_len + len >= command_buff.size()-1) 
-      ? command_buff.size()-1 - command_len : len;
-
-  // copy the buffer into command_buff
-  if(command_len < command_buff.size()-1){
-    std::copy_n(buff, cpy_len, &command_buff[command_len]);
-    command_len += cpy_len;
-  }
-  else
+  if (cpyPtr == &command_buff.back())
   {
-    command_buff[command_buff.size()-2] = buff[0];
-    command_len = command_buff.size()-1;
+    // always put one new character from the input buffer into our
+    // buffer
+    cpyPtr = cpyPtr-1;
+    command_len--;
   }
-  
 
-  // make sure we are null terminated
+  while ( len > 0 && cpyPtr < &command_buff.back() )
+  {
+    // check for numeric character, enter, '-', or ESC.
+    if( isdigit(*buff) )
+    {
+      // copy the char from the input buffer
+      *cpyPtr++ = *buff;
+      command_len++;
+    }
+    // copy in '-' if it is the first character
+    else if( *buff == '-' && cpyPtr == command_buff.data())
+    {
+      // copy the char from the input buffer
+      *cpyPtr++ = *buff;
+      command_len++;
+    }
+    // check for control sequence
+    else if (*buff== '\n' || *buff == '\r' || *buff == '\x1b')
+    {
+      // copy the char from the input buffer
+      *cpyPtr++ = *buff;
+      command_len++;
+
+      // exit the loop
+      break;
+    }
+    // check for backspace or delete
+    else if(*buff == '\b' || *buff == '\x7F')
+    {
+      // if we haven't backspaced to the beginning of the buffer, decriment the parsed 
+      // command
+      if (command_len > 0)
+      {
+        cpyPtr--;
+        command_len--;
+      }
+    }
+
+    // go to the next spot in the buffer 
+    buff++;
+    len--;
+  }
+
+  // null terminate the string thus far
+  *cpyPtr = '\0';
+
+  // make sure we null terminate
   command_buff.back() = '\0';
-
 }
 
 int ComputerInterface::parse_command() 
 {
   int menu_num = -1;
 
-  // parse for backspace characters
-  char *backspace = strpbrk(command_buff.data(), "\b\x7F");
-
-  while (backspace != nullptr)
+  // loop through the command string and make sure the characters are
+  // numeric or accepted commands
+  char *cmd = command_buff.data();     
+  int cmd_len = 0;
+  
+  while (*cmd != '\0')
   {
-    //copy the characters after the backspace to the position before the backspace
-    char *cpyPtr = nullptr;
+    // check for enter or ESC
+    if(*cmd == '\n' || *cmd == '\r' || *cmd == '\x1B')
+    {
+      // escape character
+      if(*cmd == '\x1B')
+      {
+        menu_num = -2;
+      }
+      else 
+      {
+        // grab the integer from the buffer
+        if(sscanf(command_buff.data(), "%d", &menu_num) !=1 )
+          menu_num = -1;
+      }
 
-    *backspace = '*';
-    if(backspace == command_buff.data()){
-      cpyPtr = backspace;
-      command_len--;
-    }
-    else {
-      cpyPtr = backspace-1;
-      command_len -= 2;
+      // clear the buffer
+      command_len = 0;
+      command_buff.fill('\0');
+
+      // done with the loop
+      break;
     }
 
-    while(*(backspace+1) != '\0') {
-      *cpyPtr = *(backspace+1);
-      cpyPtr++;
-      backspace++;
-    }
-    *cpyPtr = '\0';
-
-    backspace = strpbrk(command_buff.data(), "\b\x7F");
-    HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
+    // move on to the next command character
+    cmd++;
+    cmd_len++;
   }
-  command_buff.back() = '\0';
 
-  // check if the enter key was pressed
-  if(strpbrk(command_buff.data(), "\n\r") != nullptr)
-  {
+  const uint8_t BUFFSIZE = 125; // same length as the USB buffer
+  char buff[BUFFSIZE] = {0};
 
-    // do parsing here
-    if(sscanf(command_buff.data(), "%d", &menu_num) !=1 )
-      menu_num = -1;
+  // print the command buffer
+  HAL_Delay(1);
+  my_sprintf(buff,
+  "%d\n"
+  "%s\n",
+  command_len,
+  command_buff.data());
+  CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
 
-    // clear the buffer
-    command_len = 0;
-    command_buff.fill('\0');
-  }
   return menu_num;
 }
 
 void ComputerInterface::display_settings()
 {
   static int command = -1;
-  const uint8_t BUFFSIZE = 128; // same length as the USB buffer
-  char buff[BUFFSIZE] = {0};
 
   menu.display_menu(command);
-
-  // print the command buffer
-  HAL_Delay(1);
-  my_sprintf(buff,
-  "Command Length: %d\n"
-  "%s\n",
-  command_len,
-  command_buff.data());
-  CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
-
   command = parse_command();
   
   /*

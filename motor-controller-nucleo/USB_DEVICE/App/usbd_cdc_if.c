@@ -94,7 +94,7 @@ extern void* hcomp_iface;
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
 #define APP_RX_DATA_SIZE  64
-#define APP_TX_DATA_SIZE  64
+#define APP_TX_DATA_SIZE  128 
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -321,7 +321,8 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
   if (hcdc->TxState != 0){
     return USBD_BUSY;
   }
-  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
+  memcpy(UserTxBufferFS, Buf, Len);
+  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, Len);
   result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
   /* USER CODE END 7 */
   return result;
