@@ -6,7 +6,8 @@
         "TMC4671Interface.h": "cpp",
         "ComputerMenu.h": "cpp",
         "array": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "cstring": "cpp"
     },
     "editor.tabSize": 2
 }

@@ -64,13 +64,28 @@ void ComputerMenu::display_menu(int menu_num)
   CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
   HAL_Delay(1);
 
-  if (menu_num == -1){
+  // check that the recieved menu number is valid or we were told to keep current menu
+  if (menu_num == KEEP_MENU || 
+      menu_num <  UP_LEVEL  || 
+      menu_num >= current_menu->menu_items)
+  {
     list_menu_items(*current_menu, buff);
   }
   else {
+    auto is_main_menu = strcmp(current_menu->name_str, "Main Menu") == 0;
+    if(!is_main_menu  && menu_num == UP_LEVEL){
+      menu_num = 0; // up level is the first item in each menu
+    }
+    else {
+      strcpy(buff, "\a");
+      CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+      HAL_Delay(1);
+    }
+    // go to the selected menu
     current_menu = current_menu->menu[menu_num].menu != nullptr ? &current_menu->menu[menu_num] : current_menu;
 
-    if (strcmp(current_menu->name_str, "Up") == 0){
+    auto up_selected = strcmp(current_menu->name_str, "Up") == 0;
+    if (up_selected){
       current_menu = current_menu->menu;
     }
 

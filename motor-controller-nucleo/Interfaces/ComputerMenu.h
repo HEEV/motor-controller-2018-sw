@@ -18,6 +18,9 @@ public:
 
   void display_menu(int menu_num);
 
+  const static int KEEP_MENU = -1;
+  const static int UP_LEVEL = -2;
+
 private:
   const char* get_menu_item_str(const MenuItem &item, int item_num, char* buff) const;
   void list_menu_items(const MenuItem &item, char *buff);
