@@ -32,3 +32,6 @@
 *.app
 *.elf
 *.hex
+
+# VScode
+.vscode/ipch
