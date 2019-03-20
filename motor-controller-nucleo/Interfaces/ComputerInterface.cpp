@@ -18,6 +18,7 @@ extern "C" {
 #include <usbd_cdc_if.h>
 #include <algorithm>
 #include <cctype>
+#include "settings_structs.h"
 
 // define commonly used types
 using int8_t = std::int8_t;
@@ -335,93 +336,85 @@ void ComputerInterface::copy_setting(MotorControllerPacket_t &packet, MotorContr
   using MotorParams = MotorControllerParameter_t;
 
   auto param = static_cast<MotorParams>(packet.rw_address);
+  auto& tmc4671 = settings.tmc4671; 
+  
   switch (param)
   {
-  // general motor settings
+  // general motor tmc4671
   case MotorParams::MOTOR_DIRECTION:
-    if (!toSettings) { packet.u8 = static_cast<uint8_t>(settings.MotorDir); }
-    else { settings.MotorDir = static_cast<MotorDirection_t>(packet.u8); }
+    if (!toSettings) { packet.u8 = static_cast<uint8_t>(tmc4671.MotorDir); }
+    else { tmc4671.MotorDir = static_cast<MotorDirection_t>(packet.u8); }
     break;
   case MotorParams::MOTOR_MODE:
-    if (!toSettings) { packet.u8 = static_cast<uint8_t>(settings.ControlMode); }
-    else { settings.ControlMode = static_cast<ControlMode_t>(packet.u8); }
+    if (!toSettings) { packet.u8 = static_cast<uint8_t>(tmc4671.ControlMode); }
+    else { tmc4671.ControlMode = static_cast<ControlMode_t>(packet.u8); }
     break;
   case MotorParams::SETPOINT:
-    if (!toSettings) { packet.i32 = settings.Setpoint; }
-    else { settings.Setpoint = packet.i32; }
+    if (!toSettings) { packet.i32 = tmc4671.Setpoint; }
+    else { tmc4671.Setpoint = packet.i32; }
     break;
   // Torque, velocity, and acceleration limits
   case MotorParams::CURRENT_LIMIT:
-    if (!toSettings) { packet.i16 = settings.CurrentLimit; }
-    else { settings.CurrentLimit = packet.i16; }
+    if (!toSettings) { packet.i16 = tmc4671.CurrentLimit; }
+    else { tmc4671.CurrentLimit = packet.i16; }
     break;
 
   case MotorParams::VELOCITY_LIMIT :
-    if (!toSettings) { packet.i32 = settings.VelocityLimit; }
-    else { settings.VelocityLimit= packet.i32; }
+    if (!toSettings) { packet.i32 = tmc4671.VelocityLimit; }
+    else { tmc4671.VelocityLimit= packet.i32; }
     break;
 
   case MotorParams::ACCELERATION_LIMIT :
-    if (!toSettings) { packet.i32 = settings.AccelerationLimit; }
-    else { settings.AccelerationLimit = packet.i32; }
+    if (!toSettings) { packet.i32 = tmc4671.AccelerationLimit; }
+    else { tmc4671.AccelerationLimit = packet.i32; }
     break;
 
-  // Motor type settings
+  // Motor type tmc4671
   case MotorParams::MOTOR_TYPE:
-    if (!toSettings) { packet.u8 = static_cast<uint8_t>(settings.MotorType); }
-    else { settings.MotorType = static_cast<MotorType_t>(packet.u8); }
+    if (!toSettings) { packet.u8 = static_cast<uint8_t>(tmc4671.MotorType); }
+    else { tmc4671.MotorType = static_cast<MotorType_t>(packet.u8); }
     break;
   case MotorParams::POLE_PAIRS_KV:
-    if (!toSettings) { packet.u8 = settings.PolePairs_KV; }
-    else { settings.PolePairs_KV = packet.u8; }
+    if (!toSettings) { packet.u8 = tmc4671.PolePairs_KV; }
+    else { tmc4671.PolePairs_KV = packet.u8; }
     break;
 
-  // Hall effect settings
+  // Hall effect tmc4671
   case MotorParams::HALL_POLARITY:
-    if (!toSettings) { packet.u8 = settings.HallMode.HallPolarity; }
-    else { settings.HallMode.HallPolarity = (packet.u8 != 0); }
+    if (!toSettings) { packet.u8 = tmc4671.HallMode.HallPolarity; }
+    else { tmc4671.HallMode.HallPolarity = (packet.u8 != 0); }
     break;
   case MotorParams::HALL_INTERPOLATE:
-    if (!toSettings) { packet.u8 = settings.HallMode.HallInterpolate; }
-    else { settings.HallMode.HallInterpolate = (packet.u8 != 0); }
+    if (!toSettings) { packet.u8 = tmc4671.HallMode.HallInterpolate; }
+    else { tmc4671.HallMode.HallInterpolate = (packet.u8 != 0); }
     break;
   case MotorParams::HALL_DIRECTION:
-    if (!toSettings) { packet.u8 = settings.HallMode.HallDirection; }
-    else { settings.HallMode.HallDirection = (packet.u8 != 0); }
+    if (!toSettings) { packet.u8 = tmc4671.HallMode.HallDirection; }
+    else { tmc4671.HallMode.HallDirection = (packet.u8 != 0); }
     break;
   case MotorParams::HALL_MECH_OFFSET:
-    if (!toSettings) { packet.i16 = settings.HallMechOffset; }
-    else { settings.HallMechOffset = packet.i16; }
+    if (!toSettings) { packet.i16 = tmc4671.HallMechOffset; }
+    else { tmc4671.HallMechOffset = packet.i16; }
     break;
   case MotorParams::HALL_ELEC_OFFSET:
-    if (!toSettings) { packet.i16 = settings.HallElecOffset; }
-    else { settings.HallElecOffset = packet.i16; }
+    if (!toSettings) { packet.i16 = tmc4671.HallElecOffset; }
+    else { tmc4671.HallElecOffset = packet.i16; }
     break;
 
-  // open loop settings
-  case MotorParams::OPEN_LOOP_MODE_ENABLED: /// startup in open loop mode
-    if (!toSettings) { packet.u8 = settings.OpenStartup; }
-    else { settings.OpenStartup = packet.u8; }
-    break;
-
-  case MotorParams::OPEN_LOOP_TRANSITION_VELOCITY: /// RPM to transition from open loop to closed loop mode
-    if (!toSettings) { packet.u16 = settings.OpenTransistionVel; }
-    else { settings.OpenTransistionVel = packet.u16; }
-    break;
-
+  // open loop tmc4671
   case MotorParams::OPEN_LOOP_ACCELERATION: /// Acceleration in RPM/s
-    if (!toSettings) { packet.u16 = settings.OpenAccel; }
-    else { settings.OpenAccel = packet.u16; }
+    if (!toSettings) { packet.u16 = tmc4671.OpenAccel; }
+    else { tmc4671.OpenAccel = packet.u16; }
     break;
 
   case MotorParams::OPEN_LOOP_MAX_I: /// Max current in mili-Amps
-    if (!toSettings) { packet.u16 = settings.OpenMaxI; }
-    else { settings.OpenMaxI = packet.u16; }
+    if (!toSettings) { packet.u16 = tmc4671.OpenMaxI; }
+    else { tmc4671.OpenMaxI = packet.u16; }
     break;
 
   case MotorParams::OPEN_LOOP_MAX_V: /// Max voltage in Volts
-    if (!toSettings) { packet.u16 = settings.OpenMaxV; }
-    else { settings.OpenMaxV = packet.u16; }
+    if (!toSettings) { packet.u16 = tmc4671.OpenMaxV; }
+    else { tmc4671.OpenMaxV = packet.u16; }
     break;
 
   // unknown parameter, return early

@@ -11,7 +11,11 @@
 
 #include <cstdint>
 #include <stm32f3xx_hal.h>
-#include "ComputerInterface.h"
+
+// forward struct/enum declarations
+enum class MotorDirection_t : uint8_t;
+enum class ControlMode_t : uint8_t;
+struct TMC4671Settings_t;
 
 class TMC4671Interface {
 public:
@@ -19,7 +23,7 @@ public:
      * Setup the TMC4671 based on the perameters provided in the Settings 
      * struct. 
      */
-    TMC4671Interface(MotorControllerSettings_t *settings);
+    TMC4671Interface(TMC4671Settings_t *settings);
 
 
     /**
@@ -27,7 +31,7 @@ public:
      * that a settings change does not necessitate the reinitilization of
      * an object.
      */
-    void change_settings(const MotorControllerSettings_t *settings);
+    void change_settings(const TMC4671Settings_t *settings);
 
     /**
      * Selects from Velocity, Torque, or open loop modes of operation.
@@ -84,7 +88,7 @@ public:
 
 private:
     /// pointer to a settings struct
-    MotorControllerSettings_t *Settings;
+    TMC4671Settings_t *Settings;
 
     /// Class state for the direction of the motor
     MotorDirection_t Direction;

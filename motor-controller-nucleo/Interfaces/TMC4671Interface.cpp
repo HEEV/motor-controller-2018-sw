@@ -1,5 +1,6 @@
 #include "TMC4671Interface.h"
 #include <ic/TMC4671/TMC4671.h>
+#include "settings_structs.h"
 
 // used for pin the SPI functions for pin useage
 #include "main.h"
@@ -12,7 +13,7 @@ using uint32_t = std::uint32_t;
 extern SPI_HandleTypeDef *TMC4671_SPI;
 
 // define some helper functions (implemented after the class function implementations)
-static void hall_effect_init(const MotorControllerSettings_t &motor_settings);
+static void hall_effect_init(const TMC4671Settings_t &motor_settings);
 static void adc_init();
 static void pwm_init();
 
@@ -23,7 +24,7 @@ extern "C" {
 }
 
 // detailed documentation in the .h file
-TMC4671Interface::TMC4671Interface(MotorControllerSettings_t *settings)
+TMC4671Interface::TMC4671Interface(TMC4671Settings_t *settings)
 {
   // get the TMC4671 into a known state
 
@@ -49,13 +50,10 @@ TMC4671Interface::TMC4671Interface(MotorControllerSettings_t *settings)
 }
 
 // detailed information in the .h file
-void TMC4671Interface::change_settings(const MotorControllerSettings_t *settings) 
+void TMC4671Interface::change_settings(const TMC4671Settings_t *settings) 
 {
   // initilize hall effect sensors
   hall_effect_init(*settings);
-
-  // go through the settings, update the TMC4671 (or internal state) based on them
-  Direction = settings->MotorDir;
 
   const uint8_t motor_type = static_cast<uint8_t>(settings->MotorType);
 
@@ -80,7 +78,7 @@ void TMC4671Interface::change_settings(const MotorControllerSettings_t *settings
   // now initilize the settings that will be changed the most frequently
   set_control_mode(settings->ControlMode);
   set_direction(settings->MotorDir);
-  set_setpoint(settings->Setpoint);
+  set_setpoint(Setpoint);
 }
 
 // documented in the .h file
@@ -165,7 +163,7 @@ void TMC4671Interface::disable(){
  * mechanical offsets are dependent on the motor used, and therefore need to
  * be easily modifiable by the end user. 
  */
-static void hall_effect_init(const MotorControllerSettings_t &motor_settings)
+static void hall_effect_init(const TMC4671Settings_t &motor_settings)
 {
   // stuff to setup hall effect sensors here (default config good for now)
   const uint32_t HALL_POSITION[] = {0x55557FFF, 0x00012AAB, 0xAAADD557};

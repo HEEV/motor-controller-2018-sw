@@ -18,7 +18,7 @@ ComputerMenu::ComputerMenu()
 
   limits_menu_items[0] = MenuItem{"Up", "", &main_menu, 1};
   limits_menu_items[1] = MenuItem{"Max Current", "", nullptr, 0};
-  limits_menu_items[2] = MenuItem{"Max Voltage", "", nullptr, 0};
+  limits_menu_items[2] = MenuItem{"Max Velocity", "", nullptr, 0};
   limits_menu_items[3] = MenuItem{"Max Acceleration", "", nullptr, 0};
 
   motor_setting_items[0] = MenuItem{"Up", "", &main_menu, 1}; 

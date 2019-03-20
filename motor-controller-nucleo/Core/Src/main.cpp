@@ -54,6 +54,8 @@
 #include <CanNode.h>
 #include <helpers/API_Header.h>
 #include <ic/TMC4671/TMC4671.h>
+
+#include "settings_structs.h"
 #include <ComputerInterface.h>
 #include <TMC4671Interface.h>
 //#include <ComputerMenu.h>
@@ -203,23 +205,34 @@ int main(void)
   TransistorTemp_ADCVal = 0; 
 
   // Some default motor settings
-  MotorControllerSettings_t mc_settings;
-  mc_settings.MotorDir = MotorDirection_t::REVERSE;
-  mc_settings.ControlMode = ControlMode_t::TORQUE;
-  mc_settings.Setpoint = 0;
+  MotorControllerSettings_t mc_settings = 
+  {
+    { // TMC4671 Settings
+      MotorDirection_t::FORWARD,
+      ControlMode_t::TORQUE,
+      0,      // Setpoint
 
-  mc_settings.CurrentLimit = 6000;
-  mc_settings.VelocityLimit = 10000;
-  mc_settings.AccelerationLimit = 500;
+      6000,   // current limit
+      10000,  // velocity limit
+      500,    // acceleration limit
 
-  mc_settings.MotorType = MotorType_t::BLDC_MOTOR;
-  mc_settings.PolePairs_KV = 7;
+      MotorType_t::BLDC_MOTOR,
+      7,      // Pole Pairs
 
-  mc_settings.HallMode.HallPolarity = 1;
-  mc_settings.HallMode.HallInterpolate = 1;
-  mc_settings.HallMode.HallDirection = 0;
-  mc_settings.HallElecOffset = -10000;
-  mc_settings.HallMechOffset = 0;
+      {
+        1,    // Hall Polarity
+        1,    // Hall Interpolate
+        0     // Hall Direction
+      },
+      -10000, // Hall Electrical Offset
+      0,      // Hall Mechanical Offset
+
+      0,      // Open Loop Acceleration
+      0,      // Open Loop Velocity
+      0,      // Open Loop max Current
+      0       // Open Loop max Voltage
+    }
+  };
 
   /* MCU Configuration----------------------------------------------------------*/
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -247,7 +260,7 @@ int main(void)
 
   // setup the two main hardware interfaces
   ComputerInterface comp_interface(&mc_settings);
-  TMC4671Interface  tmc4671(&mc_settings);
+  TMC4671Interface  tmc4671(&mc_settings.tmc4671);
 
   // initilize pointer for the USB interface
   hcomp_iface = &comp_interface;
