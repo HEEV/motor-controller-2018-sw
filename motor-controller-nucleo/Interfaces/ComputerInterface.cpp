@@ -37,7 +37,8 @@ void computerInterface_update_buffer(void* piface, const uint8_t* buff, uint32_t
   hcomp_iface->add_to_buffer(buff, len);
 }
 
-ComputerInterface::ComputerInterface(MotorControllerSettings_t *Settings_)
+ComputerInterface::ComputerInterface(MotorControllerSettings_t *Settings_) :
+  menu(ComputerInterface::access_setting_value)
 {
   //keep the address of the settings
   Settings = Settings_;
@@ -190,9 +191,9 @@ int ComputerInterface::parse_command()
   // print the command buffer
   HAL_Delay(1);
   my_sprintf(buff,
-  "%d\n"
-  "%s\n",
-  command_len,
+  "%d\n\r"
+  "%s\n\r",
+  menu_num,
   command_buff.data());
   CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
 

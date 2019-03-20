@@ -82,6 +82,8 @@ private:
     void transmit_packet(const MotorControllerPacket_t &packet) const;
     int parse_command();
 
+    static const char* access_setting_value(char* buff, MotorControllerParameter_t param, bool write, int value);
+
     // uses the rw_address in packet to determine the parameter to be copied. if toSettings is true
     // then the value is copied from packet into settings, otherwise it is copied from settings into packet
     static void copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings);
