@@ -5,6 +5,7 @@
         "ComputerInterface.h": "cpp",
         "TMC4671Interface.h": "cpp",
         "ComputerMenu.h": "cpp",
+        "settings_structs.h": "cpp",
         "array": "cpp",
         "string_view": "cpp",
         "cstring": "cpp"
