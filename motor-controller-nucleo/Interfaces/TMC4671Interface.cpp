@@ -171,8 +171,8 @@ static void hall_effect_init(const TMC4671Settings_t &motor_settings)
 
   uint32_t HALL_OFFSET = (motor_settings.HallElecOffset << 16) | motor_settings.HallMechOffset;
 
-  uint32_t HALL_MODE = (motor_settings.HallMode.HallDirection << 3) 
-                     | (motor_settings.HallMode.HallInterpolate << 2)
+  uint32_t HALL_MODE = (motor_settings.HallMode.HallDirection << 12) 
+                     | (motor_settings.HallMode.HallInterpolate << 8)
                      | (motor_settings.HallMode.HallPolarity);
 
   // turn on interpolation, and reverse polarity 
@@ -190,15 +190,37 @@ static void hall_effect_init(const TMC4671Settings_t &motor_settings)
 
 static void adc_init() 
 {
-  //const uint16_t ADC_PHASE1_SCALE = 305;
-  //const uint16_t ADC_PHASE2_SCALE = 305;
-  //const int16_t ADC_PHASE1_OFFSET = 33434;
-  //const int16_t ADC_PHASE2_OFFSET = 33364;
+  // constants for Isaac's power board
+  // const uint16_t ADC_PHASE1_SCALE = 315;
+  // const uint16_t ADC_PHASE2_SCALE = 315;
+  // const int16_t ADC_PHASE1_OFFSET = 33494;
+  // const int16_t ADC_PHASE2_OFFSET = 33572;
+  // const uint8_t ADC_I0_SELECT = 0;
+  // const uint8_t ADC_I1_SELECT = 1;
+  // const uint8_t ADC_I_UX_SELECT = 0;
+  // const uint8_t ADC_I_V_SELECT = 1;
+  // const uint8_t ADC_I_WY_SELECT = 2;
 
+  // constants for Trinamic's power board
   const uint16_t ADC_PHASE1_SCALE = 105;
   const uint16_t ADC_PHASE2_SCALE = 99;
-  const int16_t ADC_PHASE1_OFFSET = 33050;
-  const int16_t ADC_PHASE2_OFFSET = 33160;
+  const int16_t ADC_PHASE1_OFFSET = 33548;
+  const int16_t ADC_PHASE2_OFFSET = 33587;
+  const uint8_t ADC_I0_SELECT = 0;
+  const uint8_t ADC_I1_SELECT = 1;
+  const uint8_t ADC_I_UX_SELECT = 0;
+  const uint8_t ADC_I_V_SELECT = 2;
+  const uint8_t ADC_I_WY_SELECT = 1;
+
+  // setup which registers the ADC reads for each phase current
+  const uint32_t adc_selection = 
+                            (ADC_I0_SELECT   << TMC4671_ADC_I0_SELECT_SHIFT)   | 
+                            (ADC_I1_SELECT   << TMC4671_ADC_I1_SELECT_SHIFT)   |
+                            (ADC_I_UX_SELECT << TMC4671_ADC_I_UX_SELECT_SHIFT) |
+                            (ADC_I_V_SELECT  << TMC4671_ADC_I_V_SELECT_SHIFT)  |
+                            (ADC_I_WY_SELECT << TMC4671_ADC_I_WY_SELECT_SHIFT);
+
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_ADC_I_SELECT, adc_selection);
 
   //setup the ADC scaling and offset
   tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_ADC_I0_SCALE_OFFSET, BIT_0_TO_15, ADC_PHASE1_OFFSET);
