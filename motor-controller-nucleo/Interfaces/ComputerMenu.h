@@ -6,6 +6,7 @@
 
 // forward declaration of enum
 enum class MotorControllerParameter_t : std::uint8_t;
+class ComputerInterface; 
 
 class MenuItem {
 public:
@@ -17,11 +18,9 @@ public:
   int menu_items;
 };
 
-typedef const char* (*data_access_fun)(char* buff, MotorControllerParameter_t param, bool write, int value);
-
 class ComputerMenu {
 public:
-  ComputerMenu(data_access_fun access_fun);  
+  ComputerMenu(ComputerInterface* ci);  
 
   void display_menu(int menu_num);
 
@@ -31,7 +30,7 @@ public:
 private:
   const char* get_menu_item_str(const MenuItem &item, int item_num, char* buff) const;
   void list_menu_items(const MenuItem &item, char *buff);
-  void display_leaf_item(const MenuItem &item, char *buff);
+  void display_leaf_item(const MenuItem &item, int command, char *buff);
 
   MenuItem main_menu;
   std::array<MenuItem, 4> main_menu_items;
@@ -44,7 +43,7 @@ private:
 
   MenuItem *current_menu;
   MenuItem *leaf_item;
-  data_access_fun data_access;
+  ComputerInterface *compInterface;
 };
 
 #endif //_COMPUTER_MENU_H_

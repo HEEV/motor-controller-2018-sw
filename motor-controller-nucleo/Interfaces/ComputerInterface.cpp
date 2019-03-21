@@ -18,6 +18,7 @@ extern "C" {
 #include <usbd_cdc_if.h>
 #include <algorithm>
 #include <cctype>
+#include "TMC4671Interface.h"
 #include "settings_structs.h"
 
 // define commonly used types
@@ -37,11 +38,12 @@ void computerInterface_update_buffer(void* piface, const uint8_t* buff, uint32_t
   hcomp_iface->add_to_buffer(buff, len);
 }
 
-ComputerInterface::ComputerInterface(MotorControllerSettings_t *Settings_) :
-  menu(ComputerInterface::access_setting_value)
+ComputerInterface::ComputerInterface(MotorControllerSettings_t *Settings_, TMC4671Interface* mc_handle) :
+  menu(this)
 {
   //keep the address of the settings
   Settings = Settings_;
+  htmc4671 = mc_handle;
 }
 
 /** 
@@ -207,114 +209,216 @@ void ComputerInterface::display_settings()
   menu.display_menu(command);
   command = parse_command();
   
-  /*
-  // Make my buffer the same length as the USB buffer (defined in usbd_cdc_if.c)
-  const uint8_t BUFFSIZE = 128; // same length as the USB buffer
-  char buff[BUFFSIZE] = {0};
-  
-  char enum_name[10];
-  switch(Settings->MotorDir)
-  {
-    default:
-    case MotorDirection_t::FORWARD:
-      strcpy(enum_name, "Forward");
-      break;
-    case MotorDirection_t::REVERSE:
-      strcpy(enum_name, "Reverse");
-      break;
-  } 
-  my_sprintf(buff, 
-  "\fMotor Settings\n"
-  "Motor Direction: %s\n", enum_name);
-  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+}
 
-  switch(Settings->ControlMode)
-  {
-    default:
-    case ControlMode_t::VELOCITY:
-      strcpy(enum_name, "Velocity");
-      break;
-    case ControlMode_t::TORQUE:
-      strcpy(enum_name, "Torque");
-      break;
-    case ControlMode_t::OPEN_LOOP:
-      strcpy(enum_name, "Open Loop");
-      break;
-  } 
+const char* ComputerInterface::access_setting_value(char *buff, MotorControllerParameter_t param, bool write, std::int32_t value)
+{
+  // so I don't have to type MotorControllerParameter_t every time
+  using MotorParams = MotorControllerParameter_t;
 
-  #warning("Should probably add units here")
-  my_sprintf(buff, 
-  "Control Mode: %s\n"
-  "Setpoint: %ld\n" // I should add units here
-  "Current Limit: %d mA\n",
-  enum_name, Settings->Setpoint, Settings->CurrentLimit);
-  HAL_Delay(1);
-  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+  auto& tmc4671 = Settings->tmc4671; 
 
-  my_sprintf(buff, 
-  "Velocity Limit: %d RPM\n"
-  "Acceleration Limit: %lu RPM/sec\n",
-  Settings->CurrentLimit, Settings->AccelerationLimit);
-  HAL_Delay(1);
-  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
-  
   // make a lambda function to convert a bit slice into a string
   auto bit2Str = [](uint8_t bit) { return bit ? "On" : "Off";};
 
-  // Print the hall effect settings
-  my_sprintf(buff, 
-  "Hall effect sensor settings:"
-  "Invert Hall Polarity: %s\n"
-  "Interpolate Hall Readings: %s\n"
-  "Reverse Hall Direction: %s\n",
-  bit2Str(Settings->HallMode.HallPolarity), 
-  bit2Str(Settings->HallMode.HallInterpolate),
-  bit2Str(Settings->HallMode.HallDirection)); 
-  HAL_Delay(1);
-  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+  switch (param)
+  {
+  // general motor tmc4671
+  case MotorParams::MOTOR_DIRECTION:
+    if (write)
+    {
+      tmc4671.MotorDir = (MotorDirection_t) value;
+      htmc4671->set_direction(tmc4671.MotorDir);
+    }
+    switch(tmc4671.MotorDir) {
+      default:
+      case MotorDirection_t::FORWARD:
+        return "Forward";
+      case MotorDirection_t::REVERSE:
+        return "Reverse";
+    } 
+    break;
+    
+  case MotorParams::MOTOR_MODE:
+    if (write)
+    {
+      tmc4671.ControlMode = (ControlMode_t) value;
+      htmc4671->set_control_mode(tmc4671.ControlMode);
+    }
+    switch(tmc4671.ControlMode) {
+      default:
+      case ControlMode_t::VELOCITY:
+        return "Velocity";
+      case ControlMode_t::TORQUE:
+        return "Torque";
+      case ControlMode_t::OPEN_LOOP:
+        return "Open Loop";
+    } 
+    break;
 
-  my_sprintf(buff, 
-  "Hall Mechanical Offset: %d\n"
-  "Hall Electrical Offset: %d\n",
-  Settings->HallMechOffset, Settings->HallElecOffset);
-  HAL_Delay(1);
-  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+  case MotorParams::SETPOINT:
+    if (write) 
+    { 
+      tmc4671.Setpoint = (std::uint32_t) value; 
+      htmc4671->set_setpoint(tmc4671.Setpoint);
+    }
+    my_sprintf(buff, "%lu", tmc4671.Setpoint);
+    return buff; 
 
-  // print the command buffer
-  HAL_Delay(1);
-  my_sprintf(buff,
-  "Command Length: %d\n"
-  "%s\n",
-  command_len,
-  command_buff.data());
-  CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
-  parse_command();
-  */
+  // Torque, velocity, and acceleration limits
+  case MotorParams::CURRENT_LIMIT:
+    if (write) 
+    { 
+      tmc4671.CurrentLimit = (std::int16_t) value; 
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%d", tmc4671.CurrentLimit);
+    return buff; 
 
-  /*
-  // Print the open loop settings
-  my_sprintf(buff, 
-  "Open Loop Settings\n"
-  "Open Loop Startup: %s\n",
-  bit2Str(Settings->OpenStartup));
-  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+  case MotorParams::VELOCITY_LIMIT :
+    if (write) 
+    { 
+      tmc4671.VelocityLimit = (std::int32_t) value; 
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%ld", tmc4671.VelocityLimit);
+    return buff; 
 
-  my_sprintf(buff, 
-  "Open Loop Transistion: %u RPM\n"
-  "Open Loop Acceleration: %u RPM/sec\n"
-  "Open Loop Velocity: %u RPM\n",
-  Settings->OpenTransistionVel,
-  Settings->OpenAccel,
-  Settings->OpenVel);
-  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
+  case MotorParams::ACCELERATION_LIMIT :
+    if (write) 
+    { 
+      tmc4671.AccelerationLimit = (std::int32_t) value; 
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%ld", tmc4671.AccelerationLimit);
+    return buff; 
 
-  my_sprintf(buff, 
-  "Open Loop Max Current: %lu mA\n"
-  "Open Loop Max Voltage: %u V\n",
-  Settings->OpenMaxI,
-  Settings->OpenMaxV);
-  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
-  */
+  // Motor type tmc4671
+  case MotorParams::MOTOR_TYPE:
+    if (write)
+    {
+      switch(value)
+      {
+        default:
+        case 0:
+          tmc4671.MotorType = MotorType_t::BLDC_MOTOR;
+          break;
+        case 1:
+          tmc4671.MotorType = MotorType_t::BRUSHED_MOTOR;
+          break;
+      }
+      htmc4671->change_settings(&tmc4671);
+    }
+    switch(tmc4671.MotorType) {
+      default:
+      case MotorType_t::BLDC_MOTOR :
+        return "BLDC Motor";
+      case MotorType_t::BRUSHED_MOTOR :
+        return "Brushed Motor";
+    } 
+    break;
+
+  case MotorParams::POLE_PAIRS_KV:
+    if (write) 
+    { 
+      tmc4671.PolePairs_KV = (std::uint8_t) value; 
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%d", tmc4671.PolePairs_KV);
+    return buff; 
+
+  // Hall effect tmc4671
+  case MotorParams::HALL_POLARITY:
+    if (write) 
+    { 
+      tmc4671.HallMode.HallPolarity = static_cast<std::uint8_t>(value == 1); 
+      htmc4671->change_settings(&tmc4671);
+    }
+    return bit2Str( tmc4671.HallMode.HallPolarity );
+
+  case MotorParams::HALL_INTERPOLATE:
+    if (write) 
+    { 
+      tmc4671.HallMode.HallInterpolate = static_cast<std::uint8_t>(value == 1); 
+      htmc4671->change_settings(&tmc4671);
+    }
+    return bit2Str( tmc4671.HallMode.HallInterpolate );
+
+  case MotorParams::HALL_DIRECTION:
+    if (write) 
+    { 
+      tmc4671.HallMode.HallDirection = static_cast<std::uint8_t>(value == 1); 
+      htmc4671->change_settings(&tmc4671);
+    }
+    return bit2Str( tmc4671.HallMode.HallDirection );
+
+  case MotorParams::HALL_MECH_OFFSET:
+    if (write) 
+    { 
+      tmc4671.HallMechOffset = (std::int16_t) value; 
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%d", tmc4671.HallMechOffset);
+    return buff; 
+
+  case MotorParams::HALL_ELEC_OFFSET:
+    if (write) 
+    { 
+      tmc4671.HallElecOffset = (std::int16_t) value; 
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%d", tmc4671.HallElecOffset);
+    return buff; 
+
+  // open loop tmc4671
+  case MotorParams::OPEN_LOOP_ACCELERATION: /// Acceleration in RPM/s
+    if (write) 
+    { 
+      tmc4671.OpenAccel = (std::uint16_t) value; 
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%u", tmc4671.OpenAccel);
+    return buff; 
+
+  case MotorParams::OPEN_LOOP_MAX_I: /// Max current in mili-Amps
+    if (write) 
+    { 
+      tmc4671.OpenMaxI = (std::uint16_t) value; 
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%lu", tmc4671.OpenMaxI);
+    return buff; 
+
+  case MotorParams::OPEN_LOOP_MAX_V: /// Max voltage in Volts
+    if (write) 
+    { 
+      tmc4671.OpenMaxV = (std::uint16_t) value; 
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%u", tmc4671.OpenMaxV);
+    return buff; 
+  
+  case MotorParams::SAVE_SETTINGS :
+    if (write) 
+    { 
+      // call the save settings function
+    }
+    return "";
+    break;
+
+  case MotorParams::HALL_AUTO_SETUP:
+    if (write)
+    {
+      // call the hall auto setup function
+    }
+    return "";
+    break;
+
+
+  // unknown parameter, return early
+  default:
+    return "Unknown Parameter";
+  }
 }
 
 /**

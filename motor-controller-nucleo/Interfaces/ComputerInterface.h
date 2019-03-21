@@ -45,11 +45,12 @@ void computerInterface_update_buffer(void* comp_iface, const uint8_t *buff, uint
 // struct and enum forward declaration
 struct MotorControllerSettings_t;
 struct MotorControllerPacket_t;
+class TMC4671Interface;
 enum class MotorControllerParameter_t : std::uint8_t;
 
 class ComputerInterface {
 public:
-    ComputerInterface(MotorControllerSettings_t *Settings_);
+    ComputerInterface(MotorControllerSettings_t *Settings_, TMC4671Interface *mc_handle);
 
     /** 
      * Send the current value of one of the motor controller settings to the host PC
@@ -73,6 +74,8 @@ public:
 
     void display_settings();
 
+    const char* access_setting_value(char* buff, MotorControllerParameter_t param, bool write, std::int32_t value);
+
     // disallow default initilization and copying
     ComputerInterface() = delete;
     ComputerInterface(const ComputerInterface &cpy) = delete;
@@ -82,7 +85,6 @@ private:
     void transmit_packet(const MotorControllerPacket_t &packet) const;
     int parse_command();
 
-    static const char* access_setting_value(char* buff, MotorControllerParameter_t param, bool write, int value);
 
     // uses the rw_address in packet to determine the parameter to be copied. if toSettings is true
     // then the value is copied from packet into settings, otherwise it is copied from settings into packet
@@ -92,6 +94,7 @@ private:
     std::array<char, 64> command_buff = {0};
     std::uint8_t command_len = 0;
     ComputerMenu menu;
+    TMC4671Interface* htmc4671;
 };
 #endif // __cplusplus
 #endif // SERIAL_INTERFACE_H_
