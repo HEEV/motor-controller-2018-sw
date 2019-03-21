@@ -205,6 +205,7 @@ int main(void)
   TransistorTemp_ADCVal = 0; 
 
   // Some default motor settings
+  // Trinamic Power Board
   MotorControllerSettings_t mc_settings = 
   {
     { // TMC4671 Settings
@@ -214,7 +215,7 @@ int main(void)
 
       6000,   // current limit
       10000,  // velocity limit
-      500,    // acceleration limit
+      1000,    // acceleration limit
 
       MotorType_t::BLDC_MOTOR,
       7,      // Pole Pairs
@@ -224,8 +225,8 @@ int main(void)
         1,    // Hall Interpolate
         0     // Hall Direction
       },
-      -10000, // Hall Electrical Offset
       0,      // Hall Mechanical Offset
+      -8100,  // Hall Electrical Offset
 
       0,      // Open Loop Acceleration
       0,      // Open Loop Velocity
@@ -233,6 +234,35 @@ int main(void)
       0       // Open Loop max Voltage
     }
   };
+
+  // MotorControllerSettings_t mc_settings = 
+  // {
+  //   { // TMC4671 Settings
+  //     MotorDirection_t::FORWARD,
+  //     ControlMode_t::TORQUE,
+  //     0,      // Setpoint
+
+  //     6000,   // current limit
+  //     10000,  // velocity limit
+  //     1000,    // acceleration limit
+
+  //     MotorType_t::BLDC_MOTOR,
+  //     7,      // Pole Pairs
+
+  //     {
+  //       0,    // Hall Polarity
+  //       1,    // Hall Interpolate
+  //       1     // Hall Direction
+  //     },
+  //     0,      // Hall Mechanical Offset
+  //     0,      // Hall Electrical Offset
+
+  //     0,      // Open Loop Acceleration
+  //     0,      // Open Loop Velocity
+  //     0,      // Open Loop max Current
+  //     0       // Open Loop max Voltage
+  //   }
+  // };
 
   /* MCU Configuration----------------------------------------------------------*/
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -259,8 +289,8 @@ int main(void)
   TMC4671_SPI = &hspi2;
 
   // setup the two main hardware interfaces
-  ComputerInterface comp_interface(&mc_settings);
   TMC4671Interface  tmc4671(&mc_settings.tmc4671);
+  ComputerInterface comp_interface(&mc_settings, &tmc4671);
 
   // initilize pointer for the USB interface
   hcomp_iface = &comp_interface;
