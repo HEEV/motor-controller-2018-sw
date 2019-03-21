@@ -72,6 +72,11 @@ enum class MotorControllerParameter_t : std::uint8_t {
     OPEN_LOOP_ACCELERATION,         /// Acceleration in RPM/s
     OPEN_LOOP_MAX_I,                /// Max current in mili-Amps
     OPEN_LOOP_MAX_V,                /// Max voltage in Volts
+
+    // settings that don't correspond to actual settings
+    HALL_AUTO_SETUP,
+    SAVE_SETTINGS,
+    NO_ACTION
 };
 
 
