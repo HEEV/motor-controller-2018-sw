@@ -257,12 +257,17 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
     break;
 
   case MotorParams::SETPOINT:
+  {
     if (write) 
     { 
       tmc4671.Setpoint = (std::uint32_t) value; 
       htmc4671->set_setpoint(tmc4671.Setpoint);
     }
-    my_sprintf(buff, "%lu", tmc4671.Setpoint);
+    auto units = [](ControlMode_t cm) {
+      return (cm == ControlMode_t::TORQUE) ? "mA" : "RPM";
+    };
+    my_sprintf(buff, "%lu %s", tmc4671.Setpoint, units(tmc4671.ControlMode));
+  }
     return buff; 
 
   // Torque, velocity, and acceleration limits
@@ -272,7 +277,7 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       tmc4671.CurrentLimit = (std::int16_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
-    my_sprintf(buff, "%d", tmc4671.CurrentLimit);
+    my_sprintf(buff, "%d mA", tmc4671.CurrentLimit);
     return buff; 
 
   case MotorParams::VELOCITY_LIMIT :
@@ -281,7 +286,7 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       tmc4671.VelocityLimit = (std::int32_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
-    my_sprintf(buff, "%ld", tmc4671.VelocityLimit);
+    my_sprintf(buff, "%ld RPM", tmc4671.VelocityLimit);
     return buff; 
 
   case MotorParams::ACCELERATION_LIMIT :
@@ -290,7 +295,7 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       tmc4671.AccelerationLimit = (std::int32_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
-    my_sprintf(buff, "%ld", tmc4671.AccelerationLimit);
+    my_sprintf(buff, "%ld RPM/Sec", tmc4671.AccelerationLimit);
     return buff; 
 
   // Motor type tmc4671
@@ -319,13 +324,18 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
     break;
 
   case MotorParams::POLE_PAIRS_KV:
+  {
     if (write) 
     { 
       tmc4671.PolePairs_KV = (std::uint8_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
-    my_sprintf(buff, "%d", tmc4671.PolePairs_KV);
+    auto units = [](MotorType_t mt) {
+      return (mt == MotorType_t::BLDC_MOTOR) ? "Pole Pairs" : "RPM/Volt";
+    };
+    my_sprintf(buff, "%d %s", tmc4671.PolePairs_KV, units(tmc4671.MotorType));
     return buff; 
+  }
 
   // Hall effect tmc4671
   case MotorParams::HALL_POLARITY:
@@ -377,7 +387,7 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       tmc4671.OpenAccel = (std::uint16_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
-    my_sprintf(buff, "%u", tmc4671.OpenAccel);
+    my_sprintf(buff, "%u RPM/Sec", tmc4671.OpenAccel);
     return buff; 
 
   case MotorParams::OPEN_LOOP_MAX_I: /// Max current in mili-Amps
@@ -386,7 +396,7 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       tmc4671.OpenMaxI = (std::uint16_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
-    my_sprintf(buff, "%lu", tmc4671.OpenMaxI);
+    my_sprintf(buff, "%lu mA", tmc4671.OpenMaxI);
     return buff; 
 
   case MotorParams::OPEN_LOOP_MAX_V: /// Max voltage in Volts
@@ -395,7 +405,7 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       tmc4671.OpenMaxV = (std::uint16_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
-    my_sprintf(buff, "%u", tmc4671.OpenMaxV);
+    my_sprintf(buff, "%u V", tmc4671.OpenMaxV);
     return buff; 
   
   case MotorParams::SAVE_SETTINGS :

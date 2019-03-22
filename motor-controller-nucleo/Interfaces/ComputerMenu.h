@@ -38,8 +38,9 @@ private:
   // sub menus
   std::array<MenuItem, 4> limits_menu_items;
   std::array<MenuItem, 4> open_loop_items;
-  std::array<MenuItem, 5> motor_setting_items;
+  std::array<MenuItem, 6> motor_setting_items;
   std::array<MenuItem, 5> hall_setting_items;
+  std::array<MenuItem, 5> general_setting_items;
 
   MenuItem *current_menu;
   MenuItem *leaf_item;

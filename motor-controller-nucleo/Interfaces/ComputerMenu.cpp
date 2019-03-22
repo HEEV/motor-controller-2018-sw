@@ -29,18 +29,25 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
   motor_setting_items[0] = MenuItem{"Up", "", default_param, &main_menu, 1}; 
   motor_setting_items[1] = MenuItem{"Motor Type", "", mc_param::MOTOR_TYPE, nullptr, 0};
   motor_setting_items[2] = MenuItem{"Pole Pairs", "", mc_param::POLE_PAIRS_KV, nullptr, 0};
-  motor_setting_items[3] = MenuItem{"Hall Effect Settings", "", default_param, 
+  motor_setting_items[3] = MenuItem{"Open Loop Settings", "", default_param, open_loop_items.data(), open_loop_items.size()};
+  motor_setting_items[4] = MenuItem{"Hall Effect Settings", "", default_param, 
                                     hall_setting_items.data(), hall_setting_items.size()};
-  motor_setting_items[4] = MenuItem{"Hall Effect Auto Setup", "", mc_param::HALL_AUTO_SETUP, nullptr, 0};
+  motor_setting_items[5] = MenuItem{"Hall Effect Auto Setup", "", mc_param::HALL_AUTO_SETUP, nullptr, 0};
 
   open_loop_items[0] = MenuItem{"Up", "", default_param, &main_menu, 1};
   open_loop_items[1] = MenuItem{"Max Current", "", mc_param::OPEN_LOOP_MAX_I, nullptr, 0};
   open_loop_items[2] = MenuItem{"Max Voltage", "", mc_param::OPEN_LOOP_MAX_V, nullptr, 0};
   open_loop_items[3] = MenuItem{"Acceleration", "", mc_param::OPEN_LOOP_ACCELERATION, nullptr, 0};
 
+  general_setting_items[0] = MenuItem{"Up", "", default_param, &main_menu, 1};
+  general_setting_items[1] = MenuItem{"Motor Control Mode", "", mc_param::MOTOR_MODE, nullptr, 0};
+  general_setting_items[2] = MenuItem{"Motor Direction", "", mc_param::MOTOR_DIRECTION, nullptr, 0};
+  general_setting_items[3] = MenuItem{"Motor Controller CAN ID", "", default_param, nullptr, 0};
+  general_setting_items[4] = MenuItem{"Throttle CAN ID", "", default_param, nullptr, 0};
+
   main_menu_items[0] = MenuItem{"Limits", "", default_param, limits_menu_items.data(), limits_menu_items.size()};
-  main_menu_items[1] = MenuItem{"Motor Settings", "", default_param, motor_setting_items.data(), motor_setting_items.size()};
-  main_menu_items[2] = MenuItem{"Open Loop Settings", "", default_param, open_loop_items.data(), open_loop_items.size()};
+  main_menu_items[1] = MenuItem{"General Settings", "", default_param, general_setting_items.data(), general_setting_items.size()};
+  main_menu_items[2] = MenuItem{"Motor Settings", "", default_param, motor_setting_items.data(), motor_setting_items.size()};
   main_menu_items[3] = MenuItem{"Save Settings", "Save settings to flash", mc_param::SAVE_SETTINGS, nullptr, 0};
 
   main_menu = MenuItem{"Main Menu", "", default_param, main_menu_items.data(), main_menu_items.size()};
@@ -135,7 +142,7 @@ const char* ComputerMenu::get_menu_item_str(const MenuItem &item, int item_num, 
 {
   if(item.menu == nullptr)
   {
-    char value_buff[10] = {0};
+    char value_buff[24] = {0};
     auto menu_val = compInterface->access_setting_value(value_buff, item.param, false, 0);
     my_sprintf(buff, "%d) %s:\t%s\n\r", item_num, item.name_str, menu_val);
   }
@@ -183,15 +190,17 @@ void ComputerMenu::display_leaf_item(const MenuItem& menu, int command, char *bu
   strcat(buff, "\n\r");
   print(buff);
 
-  if (command == KEEP_MENU)
+
+  bool write_setting = false;
+  int32_t write_value = 0;
+  if (command != KEEP_MENU)
   {
-    compInterface->access_setting_value(buff, menu.param, false, 0);
-  }
-  else
-  {
-    compInterface->access_setting_value(buff, menu.param, true, command);
+    write_setting = true;
+    write_value = command;
   }
   
-  strcat(buff, "\n\r");
+  sprintf(buff, 
+          "%s\n\r", 
+          compInterface->access_setting_value(buff, menu.param, write_setting, write_value));
   print(buff);
 }
