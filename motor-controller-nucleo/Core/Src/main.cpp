@@ -72,6 +72,8 @@
 SPI_HandleTypeDef *TMC4671_SPI;
 CanNode  *mc_node_ptr;
 void* hcomp_iface;
+MotorControllerSettings_t* hmc_settings;
+TMC4671Interface* htmc4671;
 
 // global variables for the analog inputs
 static volatile uint16_t Throttle_ADCVal;
@@ -88,10 +90,240 @@ void SystemClock_Config(void);
 int thermistorTemperature(uint16_t adcVal);
 void mc_nodeRTR(CanMessage *msg);
 
+// initilize global variables and hardware 
+void init();
+
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
+
+/* USER CODE END 0 */
+
+/**
+  * @brief  The application entry point.
+  *
+  * @retval None
+  */
+int main(void)
+{
+  MotorControllerSettings_t mc_settings;
+  hmc_settings = &mc_settings;
+
+  // initilize most of the global variables and
+  // brings up the motor controller settings struct
+  init();
+
+  CanNode mc_node(static_cast<CanNodeType>(1000), mc_nodeRTR);
+  mc_node_ptr = &mc_node;
+
+  // setup the two main hardware interfaces
+  TMC4671Interface  tmc4671(&mc_settings.tmc4671);
+  htmc4671 = &tmc4671;
+
+  ComputerInterface comp_interface(&mc_settings, &tmc4671);
+
+  // initilize pointer for the USB interface
+  hcomp_iface = &comp_interface;
+
+  int32_t target_velocity = 0;
+  char buff1[128] = {0};
+  char tmpBuff[6];
+  uint32_t time = 0;
+  uint32_t prev_time = 0;
+
+  // Use some variables as counters.
+  // These variable should be read as milisecond count 50, and milisecond count 100 respectively.
+  // Counter variables are used because of their increased reliablitiy over simply using the mod
+  // operator on the time variable (i.e. time % 100 == 0). This is because the time variable
+  // might not get updated exactly every milisecond (or the main loop doesn't quite run that fast).
+  // This will cause some missed updates or double updates.
+  // The counter variable solves this by triggering when it is at or above the ammount of time required,
+  // then clearing once the event has happened.
+  int8_t ms_cnt25 = 0;
+  int8_t ms_cnt50 = 0;
+  int8_t ms_cnt100 = 0;
+
+
+  // enable the outputs from the tmc4671
+  tmc4671.enable();
+
+  // enable window watchdog
+  __HAL_WWDG_ENABLE(&hwwdg);
+  while (1) {
+    // Get the time difference (if this stops working for some reason put in a 1ms delay)
+    prev_time = time;
+    time = HAL_GetTick();
+    int8_t time_diff = static_cast<uint8_t> (time - prev_time);
+
+    //update counters
+    ms_cnt25 += time_diff;
+    ms_cnt50 += time_diff;
+    ms_cnt100 += time_diff;
+
+    if (ms_cnt25 >= 25) {
+      // clear the watchdog counter
+      HAL_WWDG_Refresh(&hwwdg);
+      ms_cnt25 = 0;
+    }
+    if (ms_cnt50 >= 50) {
+      tmc4671.set_setpoint(Throttle_ADCVal - 723);
+
+      //reset count
+      ms_cnt50 = 0;
+    }
+    if (ms_cnt100 >= 100) {
+
+      /*
+      strcpy(buff1, "\f\r");
+      __itoa(Throttle_ADCVal, tmpBuff, 10);
+      strcat(buff1, tmpBuff);
+
+      strcat(buff1, "\n\r");
+      __itoa(A_In1_ADCVal, tmpBuff, 10);
+      strcat(buff1, tmpBuff);
+      strcat(buff1, "\n\r");
+
+      __itoa(A_In2_ADCVal, tmpBuff, 10);
+      strcat(buff1, tmpBuff);
+      strcat(buff1, "\n\r");
+
+      __itoa(thermistorTemperature(MotorTemp_ADCVal), tmpBuff, 10);
+      strcat(buff1, tmpBuff);
+      strcat(buff1, "\n\r");
+
+      __itoa(thermistorTemperature(TransistorTemp_ADCVal), tmpBuff, 10);
+      strcat(buff1, tmpBuff);
+      CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
+      */
+      comp_interface.display_settings();
+
+
+      HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
+
+      mc_node_ptr->sendData_uint16(Throttle_ADCVal);
+      //reset count
+      ms_cnt100 = 0;
+    }
+  }
+}
+
+void init()
+{
+  // initilize the ADC variables
+  Throttle_ADCVal = 0;
+  A_In1_ADCVal = 0;
+  A_In2_ADCVal = 0;
+  MotorTemp_ADCVal = 0;
+  TransistorTemp_ADCVal = 0; 
+
+  // Some default motor settings
+  // Trinamic Power Board
+  *hmc_settings = 
+  {
+    { // TMC4671 Settings
+      MotorDirection_t::FORWARD,
+      ControlMode_t::TORQUE,
+      0,      // Setpoint
+
+      6000,   // current limit
+      10000,  // velocity limit
+      1000,    // acceleration limit
+
+      MotorType_t::BLDC_MOTOR,
+      7,      // Pole Pairs
+
+      {
+        1,    // Hall Polarity
+        1,    // Hall Interpolate
+        0     // Hall Direction
+      },
+      0,      // Hall Mechanical Offset
+      -8100,  // Hall Electrical Offset
+
+      0,      // Open Loop Acceleration
+      0,      // Open Loop Velocity
+      0,      // Open Loop max Current
+      0       // Open Loop max Voltage
+    }
+  };
+
+  // *hmc_settings = 
+  // {
+  //   { // TMC4671 Settings
+  //     MotorDirection_t::FORWARD,
+  //     ControlMode_t::TORQUE,
+  //     0,      // Setpoint
+
+  //     6000,   // current limit
+  //     10000,  // velocity limit
+  //     1000,    // acceleration limit
+
+  //     MotorType_t::BLDC_MOTOR,
+  //     7,      // Pole Pairs
+
+  //     {
+  //       0,    // Hall Polarity
+  //       1,    // Hall Interpolate
+  //       1     // Hall Direction
+  //     },
+  //     0,      // Hall Mechanical Offset
+  //     0,      // Hall Electrical Offset
+
+  //     0,      // Open Loop Acceleration
+  //     0,      // Open Loop Velocity
+  //     0,      // Open Loop max Current
+  //     0       // Open Loop max Voltage
+  //   }
+  // };
+
+  /* MCU Configuration----------------------------------------------------------*/
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* Initialize most configured peripherals */
+  MX_GPIO_Init();
+  MX_SPI2_Init();
+  MX_USART2_UART_Init();
+  MX_TIM6_Init();
+  MX_ADC2_Init();
+  MX_ADC1_Init();
+
+  // check if we were reset by the window watchdog
+  if(__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
+  {
+    // set the user pin high
+    HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
+    // clear the reset flags
+    __HAL_RCC_CLEAR_RESET_FLAGS();
+    Error_Handler();
+  }
+
+  // initilize the window watchdog
+  MX_WWDG_Init();
+
+  // Calibrate ADCs (the datasheet says this is a good idea)
+  HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+
+  //set the interface the TMC4671 uses (defined in spi.c)
+  TMC4671_SPI = &hspi2;
+
+  // initilize USB
+  MX_USB_DEVICE_Init();
+
+  // start the two ADC's in interrupt mode
+  // start the ADCs: the ADCs run a sequence of conversions with an interrupt after each one.
+  // After each conversion the ADC callback function is run, which puts the ADC value into the
+  // proper global varibles. Timer6 is used to trigger ADC conversions for a sample rate of ~ 1Khz.
+  HAL_ADC_Start_IT(&hadc2);
+  HAL_ADC_Start_IT(&hadc1);
+  // start the ADC conversion trigger timer
+  HAL_TIM_Base_Start(&htim6);
+}
 
 int thermistorTemperature(uint16_t adcVal)
 {
@@ -192,220 +424,8 @@ void HAL_WWDG_EarlyWakeupCallback(WWDG_HandleTypeDef* hwwdg)
 {
   // set pin high
   HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
-}
-
-/* USER CODE END 0 */
-
-/**
-  * @brief  The application entry point.
-  *
-  * @retval None
-  */
-int main(void)
-{
-
-  // initilize the ADC variables
-  Throttle_ADCVal = 0;
-  A_In1_ADCVal = 0;
-  A_In2_ADCVal = 0;
-  MotorTemp_ADCVal = 0;
-  TransistorTemp_ADCVal = 0; 
-
-  // Some default motor settings
-  // Trinamic Power Board
-  MotorControllerSettings_t mc_settings = 
-  {
-    { // TMC4671 Settings
-      MotorDirection_t::FORWARD,
-      ControlMode_t::TORQUE,
-      0,      // Setpoint
-
-      6000,   // current limit
-      10000,  // velocity limit
-      1000,    // acceleration limit
-
-      MotorType_t::BLDC_MOTOR,
-      7,      // Pole Pairs
-
-      {
-        1,    // Hall Polarity
-        1,    // Hall Interpolate
-        0     // Hall Direction
-      },
-      0,      // Hall Mechanical Offset
-      -8100,  // Hall Electrical Offset
-
-      0,      // Open Loop Acceleration
-      0,      // Open Loop Velocity
-      0,      // Open Loop max Current
-      0       // Open Loop max Voltage
-    }
-  };
-
-  // MotorControllerSettings_t mc_settings = 
-  // {
-  //   { // TMC4671 Settings
-  //     MotorDirection_t::FORWARD,
-  //     ControlMode_t::TORQUE,
-  //     0,      // Setpoint
-
-  //     6000,   // current limit
-  //     10000,  // velocity limit
-  //     1000,    // acceleration limit
-
-  //     MotorType_t::BLDC_MOTOR,
-  //     7,      // Pole Pairs
-
-  //     {
-  //       0,    // Hall Polarity
-  //       1,    // Hall Interpolate
-  //       1     // Hall Direction
-  //     },
-  //     0,      // Hall Mechanical Offset
-  //     0,      // Hall Electrical Offset
-
-  //     0,      // Open Loop Acceleration
-  //     0,      // Open Loop Velocity
-  //     0,      // Open Loop max Current
-  //     0       // Open Loop max Voltage
-  //   }
-  // };
-
-  /* MCU Configuration----------------------------------------------------------*/
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* Initialize most configured peripherals */
-  MX_GPIO_Init();
-  MX_SPI2_Init();
-  MX_USART2_UART_Init();
-  MX_TIM6_Init();
-  MX_ADC2_Init();
-  MX_ADC1_Init();
-
-  // check if we were reset by the window watchdog
-  if(__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
-  {
-    // set the user pin high
-    HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
-    // clear the reset flags
-    __HAL_RCC_CLEAR_RESET_FLAGS();
-    Error_Handler();
-  }
-
-  // initilize the window watchdog
-  MX_WWDG_Init();
-
-  // Calibrate ADCs (the datasheet says this is a good idea)
-  HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
-  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-
-  CanNode mc_node(static_cast<CanNodeType>(1000), mc_nodeRTR);
-  mc_node_ptr = &mc_node;
-
-  //set the interface the TMC4671 uses (defined in spi.c)
-  TMC4671_SPI = &hspi2;
-
-  // setup the two main hardware interfaces
-  TMC4671Interface  tmc4671(&mc_settings.tmc4671);
-  ComputerInterface comp_interface(&mc_settings, &tmc4671);
-
-  // initilize pointer for the USB interface
-  hcomp_iface = &comp_interface;
-
-  // initilize USB
-  MX_USB_DEVICE_Init();
-
-  int32_t target_velocity = 0;
-  char buff1[128] = {0};
-  char tmpBuff[6];
-  uint32_t time = 0;
-  uint32_t prev_time = 0;
-
-  // Use some variables as counters.
-  // These variable should be read as milisecond count 50, and milisecond count 100 respectively.
-  // Counter variables are used because of their increased reliablitiy over simply using the mod
-  // operator on the time variable (i.e. time % 100 == 0). This is because the time variable
-  // might not get updated exactly every milisecond (or the main loop doesn't quite run that fast).
-  // This will cause some missed updates or double updates.
-  // The counter variable solves this by triggering when it is at or above the ammount of time required,
-  // then clearing once the event has happened.
-  int8_t ms_cnt25 = 0;
-  int8_t ms_cnt50 = 0;
-  int8_t ms_cnt100 = 0;
-
-  // start the two ADC's in interrupt mode
-  // start the ADCs: the ADCs run a sequence of conversions with an interrupt after each one.
-  // After each conversion the ADC callback function is run, which puts the ADC value into the
-  // proper global varibles. Timer6 is used to trigger ADC conversions for a sample rate of ~ 1Khz.
-  HAL_ADC_Start_IT(&hadc2);
-  HAL_ADC_Start_IT(&hadc1);
-  // start the ADC conversion trigger timer
-  HAL_TIM_Base_Start(&htim6);
-
-  // enable the outputs from the tmc4671
-  tmc4671.enable();
-
-  // enable window watchdog
-  __HAL_WWDG_ENABLE(&hwwdg);
-  while (1) {
-    // Get the time difference (if this stops working for some reason put in a 1ms delay)
-    prev_time = time;
-    time = HAL_GetTick();
-    int8_t time_diff = static_cast<uint8_t> (time - prev_time);
-
-    //update counters
-    ms_cnt25 += time_diff;
-    ms_cnt50 += time_diff;
-    ms_cnt100 += time_diff;
-
-    if (ms_cnt25 >= 25) {
-      // clear the watchdog counter
-      HAL_WWDG_Refresh(&hwwdg);
-      ms_cnt25 = 0;
-    }
-    if (ms_cnt50 >= 50) {
-      tmc4671.set_setpoint(Throttle_ADCVal - 723);
-
-      //reset count
-      ms_cnt50 = 0;
-    }
-    if (ms_cnt100 >= 100) {
-
-      /*
-      strcpy(buff1, "\f\r");
-      __itoa(Throttle_ADCVal, tmpBuff, 10);
-      strcat(buff1, tmpBuff);
-
-      strcat(buff1, "\n\r");
-      __itoa(A_In1_ADCVal, tmpBuff, 10);
-      strcat(buff1, tmpBuff);
-      strcat(buff1, "\n\r");
-
-      __itoa(A_In2_ADCVal, tmpBuff, 10);
-      strcat(buff1, tmpBuff);
-      strcat(buff1, "\n\r");
-
-      __itoa(thermistorTemperature(MotorTemp_ADCVal), tmpBuff, 10);
-      strcat(buff1, tmpBuff);
-      strcat(buff1, "\n\r");
-
-      __itoa(thermistorTemperature(TransistorTemp_ADCVal), tmpBuff, 10);
-      strcat(buff1, tmpBuff);
-      CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
-      */
-      comp_interface.display_settings();
-
-
-      HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
-
-      mc_node_ptr->sendData_uint16(Throttle_ADCVal);
-      //reset count
-      ms_cnt100 = 0;
-    }
-  }
+  // turn of TMC4671 outputs
+  htmc4671->disable();
 }
 
 void mc_nodeRTR(CanMessage *msg){
