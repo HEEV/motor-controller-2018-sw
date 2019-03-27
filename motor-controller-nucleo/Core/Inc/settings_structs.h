@@ -40,6 +40,14 @@ struct TMC4671Settings_t {
     std::int16_t        HallMechOffset;
     std::int16_t        HallElecOffset;
 
+    // PID values
+    std::uint16_t       FluxP;
+    std::uint16_t       FluxI;
+    std::uint16_t       TorqueP;
+    std::uint16_t       TorqueI;
+    std::uint16_t       VelocityP;
+    std::uint16_t       VelocityI;
+
     std::uint16_t       OpenAccel;
     std::uint16_t       OpenVel;
     std::uint32_t       OpenMaxI;
@@ -68,6 +76,14 @@ enum class MotorControllerParameter_t : std::uint8_t {
     HALL_MECH_OFFSET,               /// Hall effect sensors offset from the mechanical angle
     HALL_ELEC_OFFSET,               /// Hall effect sensors offset from the electrial angle 
 
+    // PID settings
+    FLUX_P,
+    FLUX_I,
+    TORQUE_P,
+    TORQUE_I,
+    VELOCITY_P,
+    VELOCITY_I,
+
     // open loop settings
     OPEN_LOOP_ACCELERATION,         /// Acceleration in RPM/s
     OPEN_LOOP_MAX_I,                /// Max current in mili-Amps
@@ -95,8 +111,17 @@ struct MotorControllerPacket_t {
     };
 };
 
+struct GeneralSettings_t {
+    std::uint16_t ControllerCanId;
+    std::uint16_t ThrottleCanId;
+    struct {
+        std::uint8_t useAnalog : 1;
+    } bool_settings;
+};
+
 // This class is basically pure state
 struct MotorControllerValues_t {
+    GeneralSettings_t General;
     TMC4671Settings_t tmc4671;
 };
 #endif //SETTINGS_STRUCTS_H

@@ -75,6 +75,16 @@ void TMC4671Interface::change_settings(const TMC4671Settings_t *settings)
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_VELOCITY_LIMIT, MotorConstant*settings->VelocityLimit);
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_ACCELERATION_LIMIT, MotorConstant*settings->AccelerationLimit);
 
+  // change the PID values
+  uint32_t pi_value = (settings->FluxP << TMC4671_PID_FLUX_P_SHIFT) | settings->FluxI;
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_FLUX_P_FLUX_I, pi_value);
+
+  pi_value = (settings->TorqueP << TMC4671_PID_TORQUE_P_SHIFT) | settings->TorqueI;
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_TORQUE_P_TORQUE_I, pi_value);
+
+  pi_value = (settings->VelocityP << TMC4671_PID_VELOCITY_P_SHIFT) | settings->VelocityI;
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_VELOCITY_P_VELOCITY_I, pi_value);
+
   // now initilize the settings that will be changed the most frequently
   set_control_mode(settings->ControlMode);
   set_direction(settings->MotorDir);

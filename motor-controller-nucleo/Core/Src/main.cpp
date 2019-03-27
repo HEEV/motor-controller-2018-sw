@@ -115,7 +115,7 @@ int main(void)
   // brings up the motor controller settings struct
   init();
 
-  CanNode mc_node(static_cast<CanNodeType>(1000), mc_nodeRTR);
+  CanNode mc_node(static_cast<CanNodeType>(mc_settings.General.ControllerCanId), mc_nodeRTR);
   mc_node_ptr = &mc_node;
 
   // setup the two main hardware interfaces
@@ -220,34 +220,32 @@ void init()
 
   // Some default motor settings
   // Trinamic Power Board
-  *hmc_settings = 
-  {
-    { // TMC4671 Settings
-      MotorDirection_t::FORWARD,
-      ControlMode_t::TORQUE,
-      0,      // Setpoint
-
-      6000,   // current limit
-      10000,  // velocity limit
-      1000,    // acceleration limit
-
-      MotorType_t::BLDC_MOTOR,
-      7,      // Pole Pairs
-
-      {
-        1,    // Hall Polarity
-        1,    // Hall Interpolate
-        0     // Hall Direction
-      },
-      0,      // Hall Mechanical Offset
-      -8100,  // Hall Electrical Offset
-
-      0,      // Open Loop Acceleration
-      0,      // Open Loop Velocity
-      0,      // Open Loop max Current
-      0       // Open Loop max Voltage
-    }
-  };
+  hmc_settings->General.ControllerCanId = 1000;
+  hmc_settings->General.ThrottleCanId = 900;
+  hmc_settings->General.bool_settings.useAnalog = 1;
+  hmc_settings->tmc4671.MotorDir = MotorDirection_t::FORWARD;
+  hmc_settings->tmc4671.ControlMode = ControlMode_t::TORQUE;
+  hmc_settings->tmc4671.Setpoint = 0;
+  hmc_settings->tmc4671.CurrentLimit = 6000;
+  hmc_settings->tmc4671.VelocityLimit = 10000;
+  hmc_settings->tmc4671.AccelerationLimit = 1000;
+  hmc_settings->tmc4671.MotorType = MotorType_t::BLDC_MOTOR;
+  hmc_settings->tmc4671.PolePairs_KV = 7;
+  hmc_settings->tmc4671.HallMode.HallPolarity = 1;
+  hmc_settings->tmc4671.HallMode.HallInterpolate = 1;
+  hmc_settings->tmc4671.HallMode.HallDirection = 0;
+  hmc_settings->tmc4671.HallMechOffset = 0;
+  hmc_settings->tmc4671.HallElecOffset = -8100;
+  hmc_settings->tmc4671.FluxP = 256;
+  hmc_settings->tmc4671.FluxI = 256;
+  hmc_settings->tmc4671.TorqueP = 256;
+  hmc_settings->tmc4671.TorqueI = 256;
+  hmc_settings->tmc4671.VelocityP = 256;
+  hmc_settings->tmc4671.VelocityI = 256;
+  hmc_settings->tmc4671.OpenAccel = 0;
+  hmc_settings->tmc4671.OpenVel = 0;
+  hmc_settings->tmc4671.OpenMaxI = 0;
+  hmc_settings->tmc4671.OpenMaxV = 0;
 
   // *hmc_settings = 
   // {
@@ -270,6 +268,13 @@ void init()
   //     },
   //     0,      // Hall Mechanical Offset
   //     0,      // Hall Electrical Offset
+
+  //     256,    // flux P
+  //     256,    // flux I
+  //     256,    // torque P
+  //     256,    // torque I
+  //     256,    // velocity P
+  //     256,    // torque I
 
   //     0,      // Open Loop Acceleration
   //     0,      // Open Loop Velocity
