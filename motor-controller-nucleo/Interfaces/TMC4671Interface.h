@@ -3,7 +3,7 @@
  * 
  * This class is designed as a "simple" interface to the Trinamic TMC4671 Chip
  * The chip is initilized (or reconfigured) via the 
- * \ref MotorControllerSettings_t struct from ComputerInterface.h. 
+ * \ref MotorControllerValues_t struct from ComputerInterface.h. 
  */
 
 #ifndef _TMC4671_INTERFACE_H
@@ -47,7 +47,7 @@ public:
      * Sets the motor direction either forward or reverse. 
      * 
      * This immediately reverses the direction, the only limit to the
-     * speed is the current limit set by the MotorControllerSettings_t struct,
+     * speed is the current limit set by the MotorControllerValues_t struct,
      * should probably only be changed when the setpoint is at or near zero.
      * 
      * Luckily, an electric vehicle shouldn't be changing directions

@@ -96,7 +96,7 @@ struct MotorControllerPacket_t {
 };
 
 // This class is basically pure state
-struct MotorControllerSettings_t {
+struct MotorControllerValues_t {
     TMC4671Settings_t tmc4671;
 };
 #endif //SETTINGS_STRUCTS_H

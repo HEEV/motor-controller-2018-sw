@@ -38,7 +38,7 @@ void computerInterface_update_buffer(void* piface, const uint8_t* buff, uint32_t
   hcomp_iface->add_to_buffer(buff, len);
 }
 
-ComputerInterface::ComputerInterface(MotorControllerSettings_t *Settings_, TMC4671Interface* mc_handle) :
+ComputerInterface::ComputerInterface(MotorControllerValues_t *Settings_, TMC4671Interface* mc_handle) :
   menu(this)
 {
   //keep the address of the settings
@@ -445,7 +445,7 @@ void ComputerInterface::transmit_packet(const MotorControllerPacket_t &packet) c
 #endif
 }
 
-void ComputerInterface::copy_setting(MotorControllerPacket_t &packet, MotorControllerSettings_t &settings, bool toSettings)
+void ComputerInterface::copy_setting(MotorControllerPacket_t &packet, MotorControllerValues_t &settings, bool toSettings)
 {
   // so I don't have to type MotorControllerParameter_t every time
   using MotorParams = MotorControllerParameter_t;

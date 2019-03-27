@@ -72,7 +72,7 @@
 SPI_HandleTypeDef *TMC4671_SPI;
 CanNode  *mc_node_ptr;
 void* hcomp_iface;
-MotorControllerSettings_t* hmc_settings;
+MotorControllerValues_t* hmc_settings;
 TMC4671Interface* htmc4671;
 
 // global variables for the analog inputs
@@ -108,7 +108,7 @@ void init();
   */
 int main(void)
 {
-  MotorControllerSettings_t mc_settings;
+  MotorControllerValues_t mc_settings;
   hmc_settings = &mc_settings;
 
   // initilize most of the global variables and
