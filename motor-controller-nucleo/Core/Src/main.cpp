@@ -44,6 +44,7 @@
 #include "usart.h"
 #include "adc.h"
 #include "tim.h"
+#include "wwdg.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 #include "gpio.h"
@@ -187,6 +188,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   
 }
 
+void HAL_WWDG_EarlyWakeupCallback(WWDG_HandleTypeDef* hwwdg) 
+{
+  // set pin high
+  HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -278,6 +285,19 @@ int main(void)
   MX_ADC2_Init();
   MX_ADC1_Init();
 
+  // check if we were reset by the window watchdog
+  if(__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
+  {
+    // set the user pin high
+    HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
+    // clear the reset flags
+    __HAL_RCC_CLEAR_RESET_FLAGS();
+    Error_Handler();
+  }
+
+  // initilize the window watchdog
+  MX_WWDG_Init();
+
   // Calibrate ADCs (the datasheet says this is a good idea)
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
@@ -312,6 +332,7 @@ int main(void)
   // This will cause some missed updates or double updates.
   // The counter variable solves this by triggering when it is at or above the ammount of time required,
   // then clearing once the event has happened.
+  int8_t ms_cnt25 = 0;
   int8_t ms_cnt50 = 0;
   int8_t ms_cnt100 = 0;
 
@@ -326,17 +347,25 @@ int main(void)
 
   // enable the outputs from the tmc4671
   tmc4671.enable();
+
+  // enable window watchdog
+  __HAL_WWDG_ENABLE(&hwwdg);
   while (1) {
     // Get the time difference (if this stops working for some reason put in a 1ms delay)
     prev_time = time;
     time = HAL_GetTick();
-    uint8_t time_diff = static_cast<uint8_t> (time - prev_time);
-
+    int8_t time_diff = static_cast<uint8_t> (time - prev_time);
 
     //update counters
+    ms_cnt25 += time_diff;
     ms_cnt50 += time_diff;
     ms_cnt100 += time_diff;
 
+    if (ms_cnt25 >= 25) {
+      // clear the watchdog counter
+      HAL_WWDG_Refresh(&hwwdg);
+      ms_cnt25 = 0;
+    }
     if (ms_cnt50 >= 50) {
       tmc4671.set_setpoint(Throttle_ADCVal - 723);
 
@@ -373,12 +402,10 @@ int main(void)
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
 
       mc_node_ptr->sendData_uint16(Throttle_ADCVal);
-
       //reset count
       ms_cnt100 = 0;
     }
   }
-
 }
 
 void mc_nodeRTR(CanMessage *msg){
@@ -459,10 +486,13 @@ void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
+  // make all of the leds on
+  HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin | Heartbeat_Pin | CAN_Status_Pin, GPIO_PIN_SET);
   while(1)
   {
-    HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
-    HAL_Delay(100);
+    // toggle LEDS
+    HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin | Heartbeat_Pin | CAN_Status_Pin);
+    HAL_Delay(250);
   }
   /* USER CODE END Error_Handler_Debug */
 }

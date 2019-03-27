@@ -57,6 +57,7 @@ Core/Src/flash.c \
 Core/Src/gpio.c \
 Core/Src/spi.c \
 Core/Src/tim.c \
+Core/Src/wwdg.c \
 Core/Src/stm32f3xx_hal_msp.c \
 Core/Src/stm32f3xx_it.c \
 Core/Src/system_stm32f3xx.c \
@@ -86,6 +87,7 @@ Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash_ex.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c_ex.c \
+Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_wwdg.c \
 USB_DEVICE/App/usb_device.c \
 USB_DEVICE/App/usbd_desc.c \
 USB_DEVICE/App/usbd_cdc_if.c \
