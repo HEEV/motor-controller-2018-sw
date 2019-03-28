@@ -216,7 +216,8 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
   // so I don't have to type MotorControllerParameter_t every time
   using MotorParams = MotorControllerParameter_t;
 
-  auto& tmc4671 = Settings->tmc4671; 
+  auto& tmc4671 = Settings->tmc4671;
+  auto& gen_settings = Settings->General;
 
   // make a lambda function to convert a bit slice into a string
   auto bit2Str = [](uint8_t bit) { return bit ? "On" : "Off";};
@@ -267,8 +268,31 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       return (cm == ControlMode_t::TORQUE) ? "mA" : "RPM";
     };
     my_sprintf(buff, "%lu %s", tmc4671.Setpoint, units(tmc4671.ControlMode));
-  }
     return buff; 
+  }
+
+  // CAN Settings
+  case MotorParams::CONTROLLER_CAN_ID:
+  {
+    if (write)
+    {
+      gen_settings.ControllerCanId = (std::uint16_t) value;
+      // TODO notify that this requires a save and restart to take effect
+    } 
+    my_sprintf(buff, "%u", gen_settings.ControllerCanId);
+    return buff;
+  }
+
+  case MotorParams::THROTTLE_CAN_ID:
+  {
+    if (write)
+    {
+      gen_settings.ThrottleCanId = (std::uint16_t) value;
+      // TODO notify that this requires a save and restart to take effect
+    } 
+    my_sprintf(buff, "%u", gen_settings.ThrottleCanId);
+    return buff;
+  }
 
   // Torque, velocity, and acceleration limits
   case MotorParams::CURRENT_LIMIT:
@@ -379,6 +403,73 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
     }
     my_sprintf(buff, "%d", tmc4671.HallElecOffset);
     return buff; 
+
+  // PI settings
+  case MotorParams::FLUX_P:
+  {
+    if(write)
+    {
+      tmc4671.FluxP = (std::uint16_t) value;
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%u", tmc4671.FluxP);
+    return buff;
+  }
+  case MotorParams::FLUX_I:
+
+  {
+    if(write)
+    {
+      tmc4671.FluxI = (std::uint16_t) value;
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%u", tmc4671.FluxI);
+    return buff;
+  }
+
+  case MotorParams::TORQUE_P:
+  {
+    if(write)
+    {
+      tmc4671.TorqueP = (std::uint16_t) value;
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%u", tmc4671.TorqueP);
+    return buff;
+  }
+  
+  case MotorParams::TORQUE_I:
+  {
+    if(write)
+    {
+      tmc4671.TorqueI = (std::uint16_t) value;
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%u", tmc4671.TorqueI);
+    return buff;
+  }
+
+  case MotorParams::VELOCITY_P:
+  {
+    if(write)
+    {
+      tmc4671.VelocityP = (std::uint16_t) value;
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%u", tmc4671.VelocityP);
+    return buff;
+  }
+
+  case MotorParams::VELOCITY_I:
+  {
+    if(write)
+    {
+      tmc4671.VelocityI = (std::uint16_t) value;
+      htmc4671->change_settings(&tmc4671);
+    }
+    my_sprintf(buff, "%u", tmc4671.VelocityI);
+    return buff;
+  }
 
   // open loop tmc4671
   case MotorParams::OPEN_LOOP_ACCELERATION: /// Acceleration in RPM/s

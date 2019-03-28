@@ -60,6 +60,10 @@ enum class MotorControllerParameter_t : std::uint8_t {
     MOTOR_MODE,                     /// Control mode (Velocity, Torque, or Open-loop)
     SETPOINT,                       /// The setpoint for the motor (RPM for velocity and open-loop, mA for Torque)
 
+    // CAN settings
+    CONTROLLER_CAN_ID,              /// Motor Controller CAN ID
+    THROTTLE_CAN_ID,                /// Throttle CAN ID
+
     // motor current, velocity, and acceleration limits
     CURRENT_LIMIT,                  /// Sets the limit on the maximum current avalible to the motor
     VELOCITY_LIMIT,                 /// Sets the maximum RPM of the motor
