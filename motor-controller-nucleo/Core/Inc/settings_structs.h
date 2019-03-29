@@ -3,6 +3,9 @@
 
 #include <cstdint>
 
+// set the maximum current to 30A
+#define GLOBAL_MAX_CURRENT 30000
+
 enum class MotorType_t : std::uint8_t {
     BLDC_MOTOR = 3,
     BRUSHED_MOTOR = 1 
@@ -94,6 +97,7 @@ enum class MotorControllerParameter_t : std::uint8_t {
     OPEN_LOOP_MAX_V,                /// Max voltage in Volts
 
     // settings that don't correspond to actual settings
+    USE_ANALOG,
     HALL_AUTO_SETUP,
     SAVE_SETTINGS,
     NO_ACTION

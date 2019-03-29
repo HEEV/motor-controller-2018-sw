@@ -298,7 +298,8 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
   case MotorParams::CURRENT_LIMIT:
     if (write) 
     { 
-      tmc4671.CurrentLimit = (std::int16_t) value; 
+      tmc4671.CurrentLimit = ((std::uint16_t) value > GLOBAL_MAX_CURRENT) ?
+          GLOBAL_MAX_CURRENT : (std::uint16_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
     my_sprintf(buff, "%d mA", tmc4671.CurrentLimit);
@@ -307,7 +308,7 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
   case MotorParams::VELOCITY_LIMIT :
     if (write) 
     { 
-      tmc4671.VelocityLimit = (std::int32_t) value; 
+      tmc4671.VelocityLimit = (std::uint32_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
     my_sprintf(buff, "%ld RPM", tmc4671.VelocityLimit);
@@ -316,7 +317,7 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
   case MotorParams::ACCELERATION_LIMIT :
     if (write) 
     { 
-      tmc4671.AccelerationLimit = (std::int32_t) value; 
+      tmc4671.AccelerationLimit = (std::uint32_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
     my_sprintf(buff, "%ld RPM/Sec", tmc4671.AccelerationLimit);
@@ -499,6 +500,15 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
     my_sprintf(buff, "%u V", tmc4671.OpenMaxV);
     return buff; 
   
+  case MotorParams::USE_ANALOG :
+  {
+    if (write) 
+    { 
+      gen_settings.bool_settings.useAnalog = static_cast<std::uint8_t>(value == 1); 
+    }
+    return bit2Str( gen_settings.bool_settings.useAnalog );
+  }
+
   case MotorParams::SAVE_SETTINGS :
     if (write) 
     { 
