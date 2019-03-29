@@ -62,10 +62,14 @@
 //#include <ComputerMenu.h>
 
 /* USER CODE BEGIN Includes */
-
+#define MC_DIR_ID (hmc_settings->General.ControllerCanId + 4)
+#define MC_CMODE_ID (MC_DIR_ID + 1)
+#define MC_MAX_VAL_ID (MC_CMODE_ID + 1)
+#define MC_ENABLE_ID  (MC_MAX_VAL_ID + 1)
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -80,7 +84,13 @@ static volatile uint16_t Throttle_ADCVal;
 static volatile uint16_t A_In1_ADCVal;
 static volatile uint16_t A_In2_ADCVal;
 static volatile uint16_t MotorTemp_ADCVal;
-static volatile uint16_t TransistorTemp_ADCVal; 
+static volatile uint16_t TransistorTemp_ADCVal;
+
+// global CAN watchdog
+static volatile uint16_t CAN_watchdog;
+
+// maximum value is 100ms
+const uint16_t MAX_CAN_WATCHDOG = 100;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,6 +99,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 int thermistorTemperature(uint16_t adcVal);
 void mc_nodeRTR(CanMessage *msg);
+void mc_nodeHandle(CanMessage *msg);
 
 // initilize global variables and hardware 
 void init();
@@ -115,7 +126,14 @@ int main(void)
   // brings up the motor controller settings struct
   init();
 
-  CanNode mc_node(static_cast<CanNodeType>(mc_settings.General.ControllerCanId), mc_nodeRTR);
+  // intilize CAN variables
+  auto base_id = mc_settings.General.ControllerCanId;
+  CanNode mc_node(static_cast<CanNodeType>(base_id), mc_nodeRTR);
+  // add some filters
+  mc_node.addFilter(1004, mc_nodeHandle);
+  mc_node.addFilter(MC_CMODE_ID, mc_nodeHandle);
+  mc_node.addFilter(MC_MAX_VAL_ID, mc_nodeHandle);
+  mc_node.addFilter(MC_ENABLE_ID, mc_nodeHandle);
   mc_node_ptr = &mc_node;
 
   // setup the two main hardware interfaces
@@ -127,9 +145,6 @@ int main(void)
   // initilize pointer for the USB interface
   hcomp_iface = &comp_interface;
 
-  int32_t target_velocity = 0;
-  char buff1[128] = {0};
-  char tmpBuff[6];
   uint32_t time = 0;
   uint32_t prev_time = 0;
 
@@ -165,6 +180,15 @@ int main(void)
     if (ms_cnt25 >= 25) {
       // clear the watchdog counter
       HAL_WWDG_Refresh(&hwwdg);
+      CanNode::checkForMessages();
+
+      CAN_watchdog += 25;
+      bool use_analog = mc_settings.General.bool_settings.useAnalog;
+      if (CAN_watchdog > MAX_CAN_WATCHDOG && !use_analog)
+      {
+        // disable TMC4671 outputs
+        tmc4671.disable();
+      }
       ms_cnt25 = 0;
     }
     if (ms_cnt50 >= 50) {
@@ -202,7 +226,7 @@ int main(void)
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
 
-      mc_node_ptr->sendData_uint16(Throttle_ADCVal);
+      //mc_node_ptr->sendData_uint16(Throttle_ADCVal);
       //reset count
       ms_cnt100 = 0;
     }
@@ -217,6 +241,9 @@ void init()
   A_In2_ADCVal = 0;
   MotorTemp_ADCVal = 0;
   TransistorTemp_ADCVal = 0; 
+
+  // initilize the CAN watchdog
+  CAN_watchdog = 0;
 
   // Some default motor settings
   // Trinamic Power Board
@@ -427,10 +454,75 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
 void HAL_WWDG_EarlyWakeupCallback(WWDG_HandleTypeDef* hwwdg) 
 {
+  UNUSED(hwwdg);
+
   // set pin high
   HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
   // turn of TMC4671 outputs
   htmc4671->disable();
+}
+
+void mc_nodeHandle(CanMessage* msg)
+{
+  // toggle the CAN status pin
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
+  
+  // switch what we do based on the id of the message
+  if (msg->id == MC_DIR_ID)
+  {
+    // switch the direction of the motor
+    MotorDirection_t data = MotorDirection_t::FORWARD;
+    mc_node_ptr->getData_uint8(msg, (uint8_t*) &data);
+    hmc_settings->tmc4671.MotorDir = (data == MotorDirection_t::FORWARD) ?
+        MotorDirection_t::FORWARD : MotorDirection_t::REVERSE;
+  }
+  else if (msg->id == MC_CMODE_ID)
+  {
+    // switch the direction of the motor
+    ControlMode_t data = ControlMode_t::TORQUE;
+    mc_node_ptr->getData_uint8(msg, (uint8_t*) &data);
+
+    // put the data into a valid state
+    switch (data)
+    {
+      default:
+      data = hmc_settings->tmc4671.ControlMode; 
+      break;
+
+      case ControlMode_t::TORQUE:
+      case ControlMode_t::VELOCITY:
+      case ControlMode_t::OPEN_LOOP:
+      break;
+    }
+    hmc_settings->tmc4671.ControlMode = data;
+  }
+  else if (msg->id == MC_MAX_VAL_ID)
+  {
+    uint16_t data[3] = {
+      hmc_settings->tmc4671.CurrentLimit, 
+      hmc_settings->tmc4671.VelocityLimit,
+      hmc_settings->tmc4671.AccelerationLimit
+    };
+
+    uint8_t len = 0;
+    mc_node_ptr->getDataArr_uint16(msg, data, &len);
+    if (len == 3)
+    {
+      // error check the current setting
+      hmc_settings->tmc4671.CurrentLimit = (data[0] > GLOBAL_MAX_CURRENT) ? 
+        GLOBAL_MAX_CURRENT : data[0]; 
+      hmc_settings->tmc4671.VelocityLimit = data[1];
+      hmc_settings->tmc4671.AccelerationLimit = data[2];
+    }
+
+  }
+  else if (msg->id == MC_ENABLE_ID)
+  {
+    // reset "watchdog" counter
+    CAN_watchdog = 0;
+    // re-enable the TMC4671
+    htmc4671->enable();
+  }
 }
 
 void mc_nodeRTR(CanMessage *msg){
@@ -510,6 +602,8 @@ void SystemClock_Config(void)
 void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+  UNUSED(file);
+  UNUSED(line);
   /* User can add his own implementation to report the HAL error return state */
   // make all of the leds on
   HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin | Heartbeat_Pin | CAN_Status_Pin, GPIO_PIN_SET);
