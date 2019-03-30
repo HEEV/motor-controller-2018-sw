@@ -127,6 +127,17 @@ int main(void)
   // intilize CAN variables
   auto base_id = mc_settings.General.ControllerCanId;
   // add some filters
+  CAN_FilterTypeDef filter;
+  filter.FilterIdLow = (MC_DIR_ID << 5);
+  filter.FilterIdHigh = (MC_CMODE_ID << 5);
+  filter.FilterMaskIdLow = (MC_MAX_VAL_ID << 5);
+  filter.FilterMaskIdHigh = (MC_ENABLE_ID << 5);
+  filter.FilterMode = CAN_FILTERMODE_IDLIST;
+  filter.FilterScale = CAN_FILTERSCALE_16BIT;
+  filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+  filter.FilterBank = 0;
+  filter.FilterActivation = CAN_FILTER_ENABLE;
+  HAL_CAN_ConfigFilter(&hcan, &filter);
 
   // setup the two main hardware interfaces
   TMC4671Interface  tmc4671(&mc_settings.tmc4671);
@@ -369,6 +380,11 @@ int thermistorTemperature(uint16_t adcVal)
 
   int tempurature = steinhart * 100;
   return tempurature;
+}
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
+{
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
 }
 
 /** ADC conversion code
