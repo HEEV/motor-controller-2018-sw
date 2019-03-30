@@ -58,6 +58,8 @@ void PendSV_Handler(void);
 void SysTick_Handler(void);
 void WWDG_IRQHandler(void);
 void ADC1_2_IRQHandler(void);
+void USB_LP_CAN_RX0_IRQHandler(void);
+void CAN_RX1_IRQHandler(void);
 void TIM6_DAC_IRQHandler(void);
 void USB_LP_IRQHandler(void);
 

@@ -125,15 +125,14 @@ int main(void)
   // initilize most of the global variables and
   // brings up the motor controller settings struct
   init();
-
   // intilize CAN variables
   auto base_id = mc_settings.General.ControllerCanId;
   CanNode mc_node(static_cast<CanNodeType>(base_id), mc_nodeRTR);
   // add some filters
-  mc_node.addFilter(1004, mc_nodeHandle);
-  mc_node.addFilter(MC_CMODE_ID, mc_nodeHandle);
-  mc_node.addFilter(MC_MAX_VAL_ID, mc_nodeHandle);
-  mc_node.addFilter(MC_ENABLE_ID, mc_nodeHandle);
+  //mc_node.addFilter(1004, mc_nodeHandle);
+  //mc_node.addFilter(MC_CMODE_ID, mc_nodeHandle);
+  //mc_node.addFilter(MC_MAX_VAL_ID, mc_nodeHandle);
+  //mc_node.addFilter(MC_ENABLE_ID, mc_nodeHandle);
   mc_node_ptr = &mc_node;
 
   // setup the two main hardware interfaces
@@ -221,7 +220,7 @@ int main(void)
       strcat(buff1, tmpBuff);
       CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buff1), strlen(buff1)+1);
       */
-      comp_interface.display_settings();
+      //comp_interface.display_settings();
 
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
@@ -465,7 +464,7 @@ void HAL_WWDG_EarlyWakeupCallback(WWDG_HandleTypeDef* hwwdg)
 void mc_nodeHandle(CanMessage* msg)
 {
   // toggle the CAN status pin
-  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
+  //HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   
   // switch what we do based on the id of the message
   if (msg->id == MC_DIR_ID)
