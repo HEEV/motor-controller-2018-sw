@@ -52,7 +52,7 @@
 #include <cstring>
 #include <cmath>
 
-#include <CanNode.h>
+#include <CanTypes.h>
 #include <helpers/API_Header.h>
 #include <ic/TMC4671/TMC4671.h>
 
@@ -74,7 +74,6 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef *TMC4671_SPI;
-CanNode  *mc_node_ptr;
 void* hcomp_iface;
 MotorControllerValues_t* hmc_settings;
 TMC4671Interface* htmc4671;
@@ -127,13 +126,7 @@ int main(void)
   init();
   // intilize CAN variables
   auto base_id = mc_settings.General.ControllerCanId;
-  CanNode mc_node(static_cast<CanNodeType>(base_id), mc_nodeRTR);
   // add some filters
-  //mc_node.addFilter(1004, mc_nodeHandle);
-  //mc_node.addFilter(MC_CMODE_ID, mc_nodeHandle);
-  //mc_node.addFilter(MC_MAX_VAL_ID, mc_nodeHandle);
-  //mc_node.addFilter(MC_ENABLE_ID, mc_nodeHandle);
-  mc_node_ptr = &mc_node;
 
   // setup the two main hardware interfaces
   TMC4671Interface  tmc4671(&mc_settings.tmc4671);
@@ -179,7 +172,7 @@ int main(void)
     if (ms_cnt25 >= 25) {
       // clear the watchdog counter
       HAL_WWDG_Refresh(&hwwdg);
-      CanNode::checkForMessages();
+      //CanNode::checkForMessages();
 
       CAN_watchdog += 25;
       bool use_analog = mc_settings.General.bool_settings.useAnalog;
@@ -322,6 +315,7 @@ void init()
   MX_TIM6_Init();
   MX_ADC2_Init();
   MX_ADC1_Init();
+  MX_CAN_Init();
 
   // check if we were reset by the window watchdog
   if(__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
@@ -471,7 +465,6 @@ void mc_nodeHandle(CanMessage* msg)
   {
     // switch the direction of the motor
     MotorDirection_t data = MotorDirection_t::FORWARD;
-    mc_node_ptr->getData_uint8(msg, (uint8_t*) &data);
     hmc_settings->tmc4671.MotorDir = (data == MotorDirection_t::FORWARD) ?
         MotorDirection_t::FORWARD : MotorDirection_t::REVERSE;
   }
@@ -479,7 +472,6 @@ void mc_nodeHandle(CanMessage* msg)
   {
     // switch the direction of the motor
     ControlMode_t data = ControlMode_t::TORQUE;
-    mc_node_ptr->getData_uint8(msg, (uint8_t*) &data);
 
     // put the data into a valid state
     switch (data)
@@ -504,7 +496,6 @@ void mc_nodeHandle(CanMessage* msg)
     };
 
     uint8_t len = 0;
-    mc_node_ptr->getDataArr_uint16(msg, data, &len);
     if (len == 3)
     {
       // error check the current setting

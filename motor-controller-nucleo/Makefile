@@ -36,8 +36,6 @@ BUILD_DIR = build
 ######################################
 # C++ sources
 CXX_SOURCES = \
-CanNode/can_driver.cpp \
-CanNode/CanNode.cpp \
 Core/Src/main.cpp \
 Interfaces/ComputerInterface.cpp \
 Interfaces/TMC4671Interface.cpp \
