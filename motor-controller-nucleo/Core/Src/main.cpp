@@ -138,6 +138,7 @@ int main(void)
   filter.FilterBank = 0;
   filter.FilterActivation = CAN_FILTER_ENABLE;
   HAL_CAN_ConfigFilter(&hcan, &filter);
+  HAL_CAN_Start(&hcan);
 
   // setup the two main hardware interfaces
   TMC4671Interface  tmc4671(&mc_settings.tmc4671);
