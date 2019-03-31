@@ -8,7 +8,8 @@
         "settings_structs.h": "cpp",
         "array": "cpp",
         "string_view": "cpp",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "*.tcc": "cpp"
     },
     "editor.tabSize": 2
 }

@@ -36,10 +36,12 @@ BUILD_DIR = build
 ######################################
 # C++ sources
 CXX_SOURCES = \
-Core/Src/main.cpp \
-Interfaces/ComputerInterface.cpp \
-Interfaces/TMC4671Interface.cpp \
-Interfaces/ComputerMenu.cpp
+Core/Main/main.cpp \
+Core/Main/Startup.cpp \
+Core/Main/Callbacks.cpp \
+Interfaces/Hardware/TMC4671Interface.cpp \
+Interfaces/Computer/ComputerInterface.cpp \
+Interfaces/Computer/ComputerMenu.cpp
 
 # C sources
 C_SOURCES =  \
@@ -47,7 +49,7 @@ tmc/ic/TMC4671/TMC4671.c \
 tmc/helpers/CRC.c \
 tmc/helpers/Functions.c \
 tmc/helpers/LinearRamp.c \
-Interfaces/tiny_printf.c \
+Interfaces/Computer/tiny_printf.c \
 Core/Src/adc.c \
 Core/Src/can.c \
 Core/Src/dac.c \
@@ -153,8 +155,10 @@ AS_INCLUDES =
 
 # C includes
 C_INCLUDES =  \
+-ICore/Main \
 -IInterfaces \
--ICanNode \
+-IInterfaces/Computer \
+-IInterfaces/Hardware \
 -Itmc \
 -ICore/Inc \
 -IDrivers/CMSIS/Device/ST/STM32F3xx/Include \
