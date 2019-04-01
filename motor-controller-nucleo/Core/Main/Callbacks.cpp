@@ -32,24 +32,25 @@ extern const uint16_t MAX_CAN_WATCHDOG;
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 {
+  CAN_RxHeaderTypeDef rx_header;
+  union {
+    uint8_t u8_data[8];
+    uint16_t data;
+  } rx_data;
+
+  HAL_CAN_GetRxMessage(hcan, 0, &rx_header, rx_data.u8_data);
+  uint16_t id = rx_header.StdId;
+  
   HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
 
-  struct thing_t
-  {
-    uint16_t id;
-    uint8_t data[8];
-  } msg_data;
-
-  thing_t* msg = & msg_data;
-
-  if (msg->id == MC_DIR_ID)
+  if (id == MC_DIR_ID)
   {
     // switch the direction of the motor
     MotorDirection_t data = MotorDirection_t::FORWARD;
     hmc_settings->tmc4671.MotorDir = (data == MotorDirection_t::FORWARD) ?
         MotorDirection_t::FORWARD : MotorDirection_t::REVERSE;
   }
-  else if (msg->id == MC_CMODE_ID)
+  else if (id == MC_CMODE_ID)
   {
     // switch the direction of the motor
     ControlMode_t data = ControlMode_t::TORQUE;
@@ -68,7 +69,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
     }
     hmc_settings->tmc4671.ControlMode = data;
   }
-  else if (msg->id == MC_MAX_VAL_ID)
+  else if (id == MC_MAX_VAL_ID)
   {
     uint16_t data[3] = {
       hmc_settings->tmc4671.CurrentLimit, 
@@ -87,7 +88,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
     }
 
   }
-  else if (msg->id == MC_ENABLE_ID)
+  else if (id == MC_ENABLE_ID)
   {
     // reset "watchdog" counter
     CAN_watchdog = 0;
