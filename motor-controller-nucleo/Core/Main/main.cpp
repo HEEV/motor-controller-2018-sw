@@ -79,6 +79,7 @@ int main(void)
   filter.FilterBank = 0;
   filter.FilterActivation = CAN_FILTER_ENABLE;
   HAL_CAN_ConfigFilter(&hcan, &filter);
+  HAL_CAN_ActivateNotification(&hcan, CAN_IER_FMPIE0 | CAN_IER_FMPIE1);
   HAL_CAN_Start(&hcan);
 
   // setup the two main hardware interfaces
@@ -108,6 +109,13 @@ int main(void)
 
   // enable the outputs from the tmc4671
   tmc4671.enable();
+
+  CAN_TxHeaderTypeDef tx_header = {1004, 0, CAN_ID_STD, CAN_RTR_DATA, 2, DISABLE};
+  union {
+    uint8_t u8_data[8];
+    uint16_t data;
+  } can_data;
+  uint32_t can_mailbox;
 
   // enable window watchdog
   __HAL_WWDG_ENABLE(&hwwdg);
@@ -146,6 +154,8 @@ int main(void)
       comp_interface.display_settings();
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
+      can_data.data = Throttle_ADCVal;
+      HAL_CAN_AddTxMessage(&hcan, &tx_header, can_data.u8_data, &can_mailbox);
 
       //reset count
       ms_cnt100 = 0;
