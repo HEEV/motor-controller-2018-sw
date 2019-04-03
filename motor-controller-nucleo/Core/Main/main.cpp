@@ -26,10 +26,12 @@
 #include <CanNode.h>
 #include <Startup.h>
 
-#define MC_DIR_ID (hmc_settings->General.ControllerCanId + 4)
-#define MC_CMODE_ID (MC_DIR_ID + 1)
-#define MC_MAX_VAL_ID (MC_CMODE_ID + 1)
-#define MC_ENABLE_ID  (MC_MAX_VAL_ID + 1)
+#define MC_DIR_ID     (static_cast<uint16_t>(hmc_settings->General.ControllerCanId + 4) )
+#define MC_CMODE_ID   (static_cast<uint16_t>(MC_DIR_ID + 1 ) )
+#define MC_MAX_I_ID   (static_cast<uint16_t>(MC_CMODE_ID + 1) )
+#define MC_MAX_VEL_ID (static_cast<uint16_t>(MC_MAX_I_ID + 1) )
+#define MC_MAX_ACC_ID (static_cast<uint16_t>(MC_MAX_VEL_ID + 1) )
+#define MC_ENABLE_ID  (static_cast<uint16_t>(MC_MAX_ACC_ID + 1 ) )
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -58,13 +60,97 @@ void rtrHandle(CanMessage* msg) {
   UNUSED(msg);
 }
 
-void nodeHandle(CanMessage* msg)
+void mc_dir_handle(CanMessage* msg)
 {
-  UNUSED(msg);
-  // blink led
+  // switch the direction of the motor
+  MotorDirection_t data = MotorDirection_t::FORWARD;
+
   HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
+  // get the data
+  CanNode::getData_uint8(msg, reinterpret_cast<uint8_t*>(&data));
+
+  // set the settings
+  hmc_settings->tmc4671.MotorDir = (data == MotorDirection_t::FORWARD) ?
+      MotorDirection_t::FORWARD : MotorDirection_t::REVERSE;
+
+  // update the motor direction
+  htmc4671->set_direction(hmc_settings->tmc4671.MotorDir);
 }
 
+void mc_cmode_handle(CanMessage* msg)
+{
+  // switch the direction of the motor
+  ControlMode_t data = ControlMode_t::TORQUE;
+
+  // GET TO THE CHOPPER!!!
+  CanNode::getData_uint8(msg, reinterpret_cast<uint8_t*>(&data));
+
+  // put the data into a valid state
+  switch (data)
+  {
+    default:
+    data = hmc_settings->tmc4671.ControlMode; 
+    break;
+
+    // in the case where the data is valid, do nothing
+    case ControlMode_t::TORQUE:
+    case ControlMode_t::VELOCITY:
+    case ControlMode_t::OPEN_LOOP:
+    break;
+  }
+  hmc_settings->tmc4671.ControlMode = data;
+
+  // change the control mode
+  htmc4671->set_control_mode(data);
+}
+
+void mc_maxCurrent_handle(CanMessage* msg)
+{
+  // initilize with known good values
+  uint16_t data = hmc_settings->tmc4671.CurrentLimit;
+
+  CanNode::getData_uint16(msg, &data);
+
+  // error check the current setting
+  hmc_settings->tmc4671.CurrentLimit = (data > GLOBAL_MAX_CURRENT) ? 
+    GLOBAL_MAX_CURRENT : data; 
+}
+
+void mc_maxVel_handle(CanMessage* msg)
+{
+  // initilize with known good values
+  uint32_t data = hmc_settings->tmc4671.VelocityLimit;
+
+  CanNode::getData_uint32(msg, &data);
+
+  // error check the current setting
+  hmc_settings->tmc4671.VelocityLimit = data;
+}
+
+void mc_maxAcc_handle(CanMessage* msg)
+{
+  // initilize with known good values
+  uint32_t data = hmc_settings->tmc4671.AccelerationLimit;
+
+  CanNode::getData_uint32(msg, &data);
+
+  // error check the current setting
+  hmc_settings->tmc4671.AccelerationLimit = data;
+}
+
+void mc_enable_handle(CanMessage* msg)
+{
+  UNUSED(msg);
+  // reset "watchdog" counter
+  CAN_watchdog = 0;
+  // re-enable the TMC4671
+  htmc4671->enable();
+}
+
+void mc_throttle_handle(CanMessage* msg)
+{
+  UNUSED(msg);
+}
 /**
   * @brief  The application entry point.
   *
@@ -79,9 +165,34 @@ int main(void)
   // brings up the motor controller settings struct
   motor_controller_init();
   // intilize CAN variables
+  auto base_id = mc_settings.General.ControllerCanId;
+  auto throttle_id = mc_settings.General.ThrottleCanId;
 
-  CanNode node(1000, nodeHandle);
-  node.addFilter_id({1004, false}, {1005, false}, {1006, false}, {1007, false}, nodeHandle);
+  CanNode node(base_id, rtrHandle);
+
+  // add filters
+  node.addFilter_id(
+    {MC_ENABLE_ID, false},
+    {throttle_id, false},
+    {MC_CMODE_ID, false},
+    {MC_DIR_ID, false},
+    mc_enable_handle,
+    mc_throttle_handle,
+    mc_cmode_handle,
+    mc_dir_handle
+  );
+
+  // add more filters
+  node.addFilter_id(
+    {MC_MAX_I_ID, false}, 
+    {MC_MAX_VEL_ID, false}, 
+    {MC_MAX_ACC_ID, false}, 
+    {MC_MAX_ACC_ID, false}, 
+    mc_maxCurrent_handle,
+    mc_maxVel_handle,
+    mc_maxAcc_handle,
+    mc_maxAcc_handle
+  );
 
   // setup the two main hardware interfaces
   TMC4671Interface  tmc4671(&mc_settings.tmc4671);

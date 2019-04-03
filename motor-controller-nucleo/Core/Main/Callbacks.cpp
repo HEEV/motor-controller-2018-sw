@@ -35,77 +35,22 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 {
   HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   CAN_RxHeaderTypeDef rx_header;
-  union {
-    uint8_t u8_data[8];
-    uint16_t data;
-  } rx_data;
+  uint8_t data[8];
 
-  HAL_CAN_GetRxMessage(hcan, 0, &rx_header, rx_data.u8_data);
-  uint16_t id = rx_header.StdId;
+  HAL_CAN_GetRxMessage(hcan, 0, &rx_header, data);
 
+  // fill a CanNode message
   CanMessage msg = {
     static_cast<uint16_t>(rx_header.StdId),
     static_cast<uint8_t>(rx_header.DLC),
     static_cast<uint8_t>(rx_header.FilterMatchIndex),
     (rx_header.RTR == 0),
-    {rx_data.u8_data[0], rx_data.u8_data[1], rx_data.u8_data[2], rx_data.u8_data[3],
-     rx_data.u8_data[4], rx_data.u8_data[5], rx_data.u8_data[6], rx_data.u8_data[7]}
+    {data[0], data[1], data[2], data[3],
+     data[4], data[5], data[6], data[7]}
   };
 
   CanNode::updateMessage(&msg);
 
-  if (id == MC_DIR_ID)
-  {
-    // switch the direction of the motor
-    MotorDirection_t data = MotorDirection_t::FORWARD;
-    hmc_settings->tmc4671.MotorDir = (data == MotorDirection_t::FORWARD) ?
-        MotorDirection_t::FORWARD : MotorDirection_t::REVERSE;
-  }
-  else if (id == MC_CMODE_ID)
-  {
-    // switch the direction of the motor
-    ControlMode_t data = ControlMode_t::TORQUE;
-
-    // put the data into a valid state
-    switch (data)
-    {
-      default:
-      data = hmc_settings->tmc4671.ControlMode; 
-      break;
-
-      case ControlMode_t::TORQUE:
-      case ControlMode_t::VELOCITY:
-      case ControlMode_t::OPEN_LOOP:
-      break;
-    }
-    hmc_settings->tmc4671.ControlMode = data;
-  }
-  else if (id == MC_MAX_VAL_ID)
-  {
-    uint16_t data[3] = {
-      hmc_settings->tmc4671.CurrentLimit, 
-      hmc_settings->tmc4671.VelocityLimit,
-      hmc_settings->tmc4671.AccelerationLimit
-    };
-
-    uint8_t len = 0;
-    if (len == 3)
-    {
-      // error check the current setting
-      hmc_settings->tmc4671.CurrentLimit = (data[0] > GLOBAL_MAX_CURRENT) ? 
-        GLOBAL_MAX_CURRENT : data[0]; 
-      hmc_settings->tmc4671.VelocityLimit = data[1];
-      hmc_settings->tmc4671.AccelerationLimit = data[2];
-    }
-
-  }
-  else if (id == MC_ENABLE_ID)
-  {
-    // reset "watchdog" counter
-    CAN_watchdog = 0;
-    // re-enable the TMC4671
-    htmc4671->enable();
-  }
 }
 
 /** ADC conversion code
