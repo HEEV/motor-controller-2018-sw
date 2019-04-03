@@ -23,6 +23,7 @@
 #include <ComputerInterface.h>
 #include <TMC4671Interface.h>
 
+#include <CanNode.h>
 #include <Startup.h>
 
 #define MC_DIR_ID (hmc_settings->General.ControllerCanId + 4)
@@ -31,6 +32,7 @@
 #define MC_ENABLE_ID  (MC_MAX_VAL_ID + 1)
 
 /* Private variables ---------------------------------------------------------*/
+
 SPI_HandleTypeDef *TMC4671_SPI;
 void* hcomp_iface;
 MotorControllerValues_t* hmc_settings;
@@ -52,6 +54,17 @@ const uint16_t MAX_CAN_WATCHDOG = 100;
 /* Private function prototypes -----------------------------------------------*/
 int thermistorTemperature(uint16_t adcVal);
 
+void rtrHandle(CanMessage* msg) {
+  UNUSED(msg);
+}
+
+void nodeHandle(CanMessage* msg)
+{
+  UNUSED(msg);
+  // blink led
+  HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
+}
+
 /**
   * @brief  The application entry point.
   *
@@ -66,21 +79,9 @@ int main(void)
   // brings up the motor controller settings struct
   motor_controller_init();
   // intilize CAN variables
-  auto base_id = mc_settings.General.ControllerCanId;
-  // add some filters
-  CAN_FilterTypeDef filter;
-  filter.FilterIdLow = (MC_DIR_ID << 5);
-  filter.FilterIdHigh = (MC_CMODE_ID << 5);
-  filter.FilterMaskIdLow = (MC_MAX_VAL_ID << 5);
-  filter.FilterMaskIdHigh = (MC_ENABLE_ID << 5);
-  filter.FilterMode = CAN_FILTERMODE_IDLIST;
-  filter.FilterScale = CAN_FILTERSCALE_16BIT;
-  filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-  filter.FilterBank = 0;
-  filter.FilterActivation = CAN_FILTER_ENABLE;
-  HAL_CAN_ConfigFilter(&hcan, &filter);
-  HAL_CAN_ActivateNotification(&hcan, CAN_IER_FMPIE0 | CAN_IER_FMPIE1);
-  HAL_CAN_Start(&hcan);
+
+  CanNode node(1000, nodeHandle);
+  node.addFilter_id({1004, false}, {1005, false}, {1006, false}, {1007, false}, nodeHandle);
 
   // setup the two main hardware interfaces
   TMC4671Interface  tmc4671(&mc_settings.tmc4671);
@@ -145,6 +146,7 @@ int main(void)
       ms_cnt25 = 0;
     }
     if (ms_cnt50 >= 50) {
+      CanNode::checkForMessages();
       tmc4671.set_setpoint(Throttle_ADCVal - 723);
 
       //reset count

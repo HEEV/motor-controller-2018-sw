@@ -7,6 +7,7 @@
 #include "stm32f3xx_hal_conf.h"
 #include "settings_structs.h"
 #include "TMC4671Interface.h"
+#include <CanNode.h>
 
 // external ADC global variables
 extern volatile std::uint16_t Throttle_ADCVal;
@@ -32,6 +33,7 @@ extern const uint16_t MAX_CAN_WATCHDOG;
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 {
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   CAN_RxHeaderTypeDef rx_header;
   union {
     uint8_t u8_data[8];
@@ -40,8 +42,17 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 
   HAL_CAN_GetRxMessage(hcan, 0, &rx_header, rx_data.u8_data);
   uint16_t id = rx_header.StdId;
-  
-  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
+
+  CanMessage msg = {
+    static_cast<uint16_t>(rx_header.StdId),
+    static_cast<uint8_t>(rx_header.DLC),
+    static_cast<uint8_t>(rx_header.FilterMatchIndex),
+    (rx_header.RTR == 0),
+    {rx_data.u8_data[0], rx_data.u8_data[1], rx_data.u8_data[2], rx_data.u8_data[3],
+     rx_data.u8_data[4], rx_data.u8_data[5], rx_data.u8_data[6], rx_data.u8_data[7]}
+  };
+
+  CanNode::updateMessage(&msg);
 
   if (id == MC_DIR_ID)
   {

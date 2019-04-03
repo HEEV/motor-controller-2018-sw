@@ -41,7 +41,11 @@ Core/Main/Startup.cpp \
 Core/Main/Callbacks.cpp \
 Interfaces/Hardware/TMC4671Interface.cpp \
 Interfaces/Computer/ComputerInterface.cpp \
-Interfaces/Computer/ComputerMenu.cpp
+Interfaces/Computer/ComputerMenu.cpp \
+CanNode/CanNode.cpp \
+CanNode/Can_getData.cpp \
+CanNode/Can_sendData.cpp \
+CanNode/can_driver.cpp
 
 # C sources
 C_SOURCES =  \
@@ -155,6 +159,7 @@ AS_INCLUDES =
 
 # C includes
 C_INCLUDES =  \
+-ICanNode \
 -ICore/Main \
 -IInterfaces \
 -IInterfaces/Computer \
