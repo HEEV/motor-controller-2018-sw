@@ -62,15 +62,15 @@ void rtrHandle(CanMessage* msg) {
 
 void mc_dir_handle(CanMessage* msg)
 {
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin | User_LED_Pin);
   // switch the direction of the motor
-  MotorDirection_t data = MotorDirection_t::FORWARD;
+  uint8_t data = static_cast<uint8_t>(hmc_settings->tmc4671.MotorDir);
 
-  HAL_GPIO_TogglePin(User_LED_GPIO_Port, User_LED_Pin);
   // get the data
-  CanNode::getData_uint8(msg, reinterpret_cast<uint8_t*>(&data));
+  CanNode::getData_uint8(msg, &data);
 
   // set the settings
-  hmc_settings->tmc4671.MotorDir = (data == MotorDirection_t::FORWARD) ?
+  hmc_settings->tmc4671.MotorDir = (data == 0) ?
       MotorDirection_t::FORWARD : MotorDirection_t::REVERSE;
 
   // update the motor direction
@@ -79,6 +79,7 @@ void mc_dir_handle(CanMessage* msg)
 
 void mc_cmode_handle(CanMessage* msg)
 {
+  //HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   // switch the direction of the motor
   ControlMode_t data = ControlMode_t::TORQUE;
 
@@ -106,6 +107,7 @@ void mc_cmode_handle(CanMessage* msg)
 
 void mc_maxCurrent_handle(CanMessage* msg)
 {
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   // initilize with known good values
   uint16_t data = hmc_settings->tmc4671.CurrentLimit;
 
@@ -118,6 +120,7 @@ void mc_maxCurrent_handle(CanMessage* msg)
 
 void mc_maxVel_handle(CanMessage* msg)
 {
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   // initilize with known good values
   uint32_t data = hmc_settings->tmc4671.VelocityLimit;
 
@@ -129,6 +132,7 @@ void mc_maxVel_handle(CanMessage* msg)
 
 void mc_maxAcc_handle(CanMessage* msg)
 {
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   // initilize with known good values
   uint32_t data = hmc_settings->tmc4671.AccelerationLimit;
 
@@ -141,6 +145,7 @@ void mc_maxAcc_handle(CanMessage* msg)
 void mc_enable_handle(CanMessage* msg)
 {
   UNUSED(msg);
+  //HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   // reset "watchdog" counter
   CAN_watchdog = 0;
   // re-enable the TMC4671
@@ -150,6 +155,7 @@ void mc_enable_handle(CanMessage* msg)
 void mc_throttle_handle(CanMessage* msg)
 {
   UNUSED(msg);
+  //HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
 }
 /**
   * @brief  The application entry point.
@@ -174,12 +180,12 @@ int main(void)
   node.addFilter_id(
     {MC_ENABLE_ID, false},
     {throttle_id, false},
-    {MC_CMODE_ID, false},
     {MC_DIR_ID, false},
+    {MC_CMODE_ID, false},
     mc_enable_handle,
     mc_throttle_handle,
-    mc_cmode_handle,
-    mc_dir_handle
+    mc_dir_handle,
+    mc_cmode_handle
   );
 
   // add more filters
@@ -222,13 +228,6 @@ int main(void)
   // enable the outputs from the tmc4671
   tmc4671.enable();
 
-  CAN_TxHeaderTypeDef tx_header = {1004, 0, CAN_ID_STD, CAN_RTR_DATA, 2, DISABLE};
-  union {
-    uint8_t u8_data[8];
-    uint16_t data;
-  } can_data;
-  uint32_t can_mailbox;
-
   // enable window watchdog
   __HAL_WWDG_ENABLE(&hwwdg);
   while (1) {
@@ -245,7 +244,7 @@ int main(void)
     if (ms_cnt25 >= 25) {
       // clear the watchdog counter
       HAL_WWDG_Refresh(&hwwdg);
-      //CanNode::checkForMessages();
+      CanNode::checkForMessages();
 
       CAN_watchdog += 25;
       bool use_analog = mc_settings.General.bool_settings.useAnalog;
@@ -257,7 +256,6 @@ int main(void)
       ms_cnt25 = 0;
     }
     if (ms_cnt50 >= 50) {
-      CanNode::checkForMessages();
       tmc4671.set_setpoint(Throttle_ADCVal - 723);
 
       //reset count
@@ -267,8 +265,8 @@ int main(void)
       comp_interface.display_settings();
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
-      can_data.data = Throttle_ADCVal;
-      HAL_CAN_AddTxMessage(&hcan, &tx_header, can_data.u8_data, &can_mailbox);
+      //can_data.data = Throttle_ADCVal;
+      // HAL_CAN_AddTxMessage(&hcan, &tx_header, can_data.u8_data, &can_mailbox);
 
       //reset count
       ms_cnt100 = 0;
