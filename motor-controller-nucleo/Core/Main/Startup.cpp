@@ -41,11 +41,11 @@ void motor_controller_init()
   hmc_settings->tmc4671.AccelerationLimit = 1000;
   hmc_settings->tmc4671.MotorType = MotorType_t::BLDC_MOTOR;
   hmc_settings->tmc4671.PolePairs_KV = 7;
-  hmc_settings->tmc4671.HallMode.HallPolarity = 1;
+  hmc_settings->tmc4671.HallMode.HallPolarity = 0;
   hmc_settings->tmc4671.HallMode.HallInterpolate = 1;
   hmc_settings->tmc4671.HallMode.HallDirection = 0;
   hmc_settings->tmc4671.HallMechOffset = 0;
-  hmc_settings->tmc4671.HallElecOffset = -8100;
+  hmc_settings->tmc4671.HallElecOffset = 18000;
   hmc_settings->tmc4671.FluxP = 256;
   hmc_settings->tmc4671.FluxI = 256;
   hmc_settings->tmc4671.TorqueP = 256;
