@@ -31,27 +31,6 @@ extern volatile uint16_t CAN_watchdog;
 
 extern const uint16_t MAX_CAN_WATCHDOG;
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
-{
-  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
-  CAN_RxHeaderTypeDef rx_header;
-  uint8_t data[8];
-
-  HAL_CAN_GetRxMessage(hcan, 0, &rx_header, data);
-
-  // fill a CanNode message
-  CanMessage msg = {
-    static_cast<uint16_t>(rx_header.StdId),
-    static_cast<uint8_t>(rx_header.DLC),
-    static_cast<uint8_t>(rx_header.FilterMatchIndex),
-    (rx_header.RTR == 0),
-    {data[0], data[1], data[2], data[3],
-     data[4], data[5], data[6], data[7]}
-  };
-
-  CanNode::updateMessage(&msg);
-
-}
 
 /** ADC conversion code
  * This is the callback function from HAL_ADC_Start_IT, it is called for both
