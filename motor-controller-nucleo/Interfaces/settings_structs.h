@@ -103,22 +103,6 @@ enum class MotorControllerParameter_t : std::uint8_t {
     NO_ACTION
 };
 
-
-struct MotorControllerPacket_t {
-    uint8_t rw_address;
-    union {
-        std::uint8_t  u8_arr[4];
-        std::int8_t   i8_arr[4];
-        std::uint8_t  u8;
-        std::int8_t   i8;
-        std::uint16_t u16;
-        std::int16_t  i16;
-        std::uint32_t u32;
-        std::int32_t  i32;
-        float         f32;
-    };
-};
-
 struct GeneralSettings_t {
     std::uint16_t ControllerCanId;
     std::uint16_t ThrottleCanId;

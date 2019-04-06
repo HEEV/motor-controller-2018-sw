@@ -52,25 +52,11 @@ class ComputerInterface {
 public:
     ComputerInterface(MotorControllerValues_t *Settings_, TMC4671Interface *mc_handle);
 
-    /** 
-     * Send the current value of one of the motor controller settings to the host PC
-     * The input to the function is the parameter that should be transmitted
-     */
-    void transmit_setting(MotorControllerParameter_t param) const;
-
-    /**
-     * Change one of the motor controller settings based on a packet (assumed to have
-     * been recieved from the host computer).
-     */
-    void change_setting(MotorControllerPacket_t &packet);
     /**
      * This function is meant to be called from the interrupt service routine for
      * the serial device in stm32f3xx_it.c or usb_cdc_if.c.
      */
-    void recieve_packet(MotorControllerPacket_t &packet);
-
     void add_to_buffer(const std::uint8_t* buff, uint32_t len);
-
 
     void display_settings();
 
@@ -83,7 +69,6 @@ public:
     ComputerInterface(const ComputerInterface &cpy) = delete;
     ComputerInterface operator=(const ComputerInterface &rhs) = delete;
 private:
-    void transmit_packet(const MotorControllerPacket_t &packet) const;
     int parse_command();
 
 
