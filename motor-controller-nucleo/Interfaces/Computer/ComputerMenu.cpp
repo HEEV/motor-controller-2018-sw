@@ -60,7 +60,6 @@ void ComputerMenu::display_menu(int menu_num)
 
   if (is_leaf_item)
   {
-    menu_num = KEEP_MENU;
     display_leaf_item(*current_menu, menu_num, buff);
   }
   else 
