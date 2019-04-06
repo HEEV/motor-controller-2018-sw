@@ -14,8 +14,9 @@ public:
   const char* menu_description;
   MotorControllerParameter_t param;
 
-  MenuItem *menu;
-  int menu_items;
+  const MenuItem *sub_menu;
+  const MenuItem *parent_menu;
+  int sub_menu_items;
 };
 
 class ComputerMenu {
@@ -43,8 +44,7 @@ private:
   std::array<MenuItem, 5> hall_setting_items;
   std::array<MenuItem, 5> general_setting_items;
 
-  MenuItem *current_menu;
-  MenuItem *leaf_item;
+  const MenuItem *current_menu;
   ComputerInterface *compInterface;
 };
 

@@ -43,6 +43,7 @@ Core/Main/CanCallbacks.cpp \
 Interfaces/Hardware/TMC4671Interface.cpp \
 Interfaces/Computer/ComputerInterface.cpp \
 Interfaces/Computer/ComputerMenu.cpp \
+Interfaces/Computer/ComputerMenu_init.cpp \
 CanNode/CanNode.cpp \
 CanNode/Can_getData.cpp \
 CanNode/Can_sendData.cpp \
@@ -179,7 +180,7 @@ C_INCLUDES =  \
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections 
 
-CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -Wextra -Wformat-security -Wswitch-default -fdata-sections -ffunction-sections 
+CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -Wextra -Wformat-security -Wswitch-default -fdata-sections -ffunction-sections -fdiagnostics-color
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -gdwarf-2
