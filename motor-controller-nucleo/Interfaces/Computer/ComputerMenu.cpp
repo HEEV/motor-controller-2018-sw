@@ -13,18 +13,44 @@ extern "C" {
 
 // constructor in ComputerMenu_init.cpp
 
+
 void ComputerMenu::display_menu(menu_cmd_t command)
 {
   // Make my buffer the same length as the USB buffer (defined in usbd_cdc_if.c)
   const uint8_t BUFFSIZE = 128; // same length as the USB buffer
   char buff[BUFFSIZE] = {0};
 
+  // clear the page
   strcpy(buff, "\f");
-  CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
-  HAL_Delay(1);
+  compInterface->println(buff);
 
+  if (navigate_menu(command))
+  {
+    // make sure we don't try and change a setting when 
+    // we don't want to (changing settings looks like a command)
+    // this might get passed on to the display_leaf_item function
+    // and would do undesireable things
+    command.cmd = menu_commands_t::KEEP_MENU;
+  }
+
+  // check that we are a leaf item
+  auto is_leaf_item = current_menu->sub_menu == nullptr;
+  if (is_leaf_item)
+  {
+    display_leaf_item(*current_menu, command, buff);
+  }
+  else 
+  {
+    list_menu_items(*current_menu, buff);
+  }
+}
+
+bool ComputerMenu::navigate_menu(menu_cmd_t command)
+{
   auto is_leaf_item = current_menu->sub_menu == nullptr;
   auto is_cmd_menu_range = !(command.data >= current_menu->sub_menu_items || command.data < 0);
+
+  bool menu_changed = false;
 
   // what to do if the recieved command is invalid or KEEP_MENU
   if (command.cmd == menu_commands_t::KEEP_MENU || 
@@ -42,15 +68,14 @@ void ComputerMenu::display_menu(menu_cmd_t command)
     {
       // go up
       current_menu = current_menu->parent_menu;
-      command.cmd = menu_commands_t::KEEP_MENU;
+      menu_changed = true;
     }
   }
   // what to do if the data is valid and not on a leaf node
   else if (!is_leaf_item) {
     // go to the user selected menu
     current_menu = &current_menu->sub_menu[command.data];
-
-    command.cmd = menu_commands_t::KEEP_MENU;
+    menu_changed = true;
 
     // if the user selected the "UP" option, go to the actual menu
     if (current_menu->parent_menu == current_menu->sub_menu){
@@ -58,29 +83,27 @@ void ComputerMenu::display_menu(menu_cmd_t command)
     }
   }
 
-  // double check that we are a leaf item
-  is_leaf_item = current_menu->sub_menu == nullptr;
-  if (is_leaf_item)
-  {
-    display_leaf_item(*current_menu, command, buff);
-  }
-  else 
-  {
-    list_menu_items(*current_menu, buff);
-  }
+  return menu_changed;
 }
 
 const char* ComputerMenu::get_menu_item_str(const MenuItem &item, int item_num, char *buff) const
 {
+  char name_buff[64] = {0};
+  strcpy(name_buff, item.name_str);
+
   if(item.sub_menu == nullptr)
   {
     char value_buff[24] = {0};
     auto menu_val = compInterface->access_setting_value(value_buff, item.param, false, 0);
-    my_sprintf(buff, "%d) %s:\t%s\n\r", item_num, item.name_str, menu_val);
+    
+    strcat(name_buff, ":");
+
+    my_sprintf(buff, "%d) %-25s\t%s\n\r", item_num, name_buff, menu_val);
   }
   else
   {
-    my_sprintf(buff, "%d) %s->\n\r", item_num, item.name_str);
+    strcat(name_buff, "->");
+    my_sprintf(buff, "%d) %-25s\n\r", item_num, name_buff);
   }
   
   return buff;

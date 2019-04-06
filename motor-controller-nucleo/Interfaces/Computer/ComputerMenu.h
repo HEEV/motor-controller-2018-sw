@@ -31,6 +31,8 @@ public:
   const static int UP_LEVEL = -2;
 
 private:
+  bool navigate_menu(menu_cmd_t command);
+
   const char* get_menu_item_str(const MenuItem &item, int item_num, char* buff) const;
   void display_menu_heading(const MenuItem &item, char* buff);
   void list_menu_items(const MenuItem &item, char *buff);

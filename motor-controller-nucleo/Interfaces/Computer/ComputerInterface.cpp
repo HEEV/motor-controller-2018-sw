@@ -58,7 +58,7 @@ menu_cmd_t ComputerInterface::parse_command()
   char buff[BUFFSIZE] = {0};
 
   // print the command buffer
-  strcpy(buff, command_parser.data());
+  my_sprintf(buff,"> %s", command_parser.data());
   println(buff);
 
   return command;
