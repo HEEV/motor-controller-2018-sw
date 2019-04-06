@@ -298,11 +298,11 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
   case MotorParams::CURRENT_LIMIT:
     if (write) 
     { 
-      tmc4671.CurrentLimit = ((std::uint16_t) value > GLOBAL_MAX_CURRENT) ?
-          GLOBAL_MAX_CURRENT : (std::uint16_t) value; 
+      tmc4671.CurrentLimit = ((std::uint32_t) value > GLOBAL_MAX_CURRENT) ?
+          GLOBAL_MAX_CURRENT : (std::uint32_t) value; 
       htmc4671->change_settings(&tmc4671);
     }
-    my_sprintf(buff, "%d mA", tmc4671.CurrentLimit);
+    my_sprintf(buff, "%lu mA", tmc4671.CurrentLimit);
     return buff; 
 
   case MotorParams::VELOCITY_LIMIT :

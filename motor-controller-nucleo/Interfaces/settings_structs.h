@@ -27,7 +27,7 @@ struct TMC4671Settings_t {
     ControlMode_t       ControlMode;
     std::int32_t        Setpoint;
 
-    std::uint16_t       CurrentLimit;
+    std::uint32_t       CurrentLimit;
     std::uint32_t       VelocityLimit;
     std::uint32_t       AccelerationLimit;
 
