@@ -37,6 +37,7 @@ void computerInterface_update_buffer(void* comp_iface, const uint8_t *buff, uint
 #ifdef __cplusplus
 #include <array>
 #include "ComputerMenu.h"
+#include "CommandParser.h"
 
 #ifndef PC_INTERFACE
 #define PC_INTERFACE UART
@@ -69,16 +70,14 @@ public:
     ComputerInterface(const ComputerInterface &cpy) = delete;
     ComputerInterface operator=(const ComputerInterface &rhs) = delete;
 private:
-    int parse_command();
-
+    menu_cmd_t parse_command();
 
     // uses the rw_address in packet to determine the parameter to be copied. if toSettings is true
     // then the value is copied from packet into settings, otherwise it is copied from settings into packet
     static void copy_setting(MotorControllerPacket_t &packet, MotorControllerValues_t &settings, bool toSettings);
 
     MotorControllerValues_t* Settings;
-    std::array<char, 64> command_buff = {0};
-    std::uint8_t command_len = 0;
+    CommandParser command_parser;
     ComputerMenu menu;
     TMC4671Interface* htmc4671;
 };

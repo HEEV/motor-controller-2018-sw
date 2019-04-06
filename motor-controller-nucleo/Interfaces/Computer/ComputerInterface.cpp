@@ -17,7 +17,6 @@ extern "C" {
 // from USB_DEVICE/App directory
 #include <usbd_cdc_if.h>
 #include <algorithm>
-#include <cctype>
 #include "TMC4671Interface.h"
 #include "settings_structs.h"
 
@@ -48,124 +47,26 @@ ComputerInterface::ComputerInterface(MotorControllerValues_t *Settings_, TMC4671
 
 void ComputerInterface::add_to_buffer(const std::uint8_t* buff, std::uint32_t len)
 {
-  // copy the characters from the buffer into the array
-  char* cpyPtr = &command_buff[command_len];
-
-  if (cpyPtr == &command_buff.back())
-  {
-    // always put one new character from the input buffer into our
-    // buffer
-    cpyPtr = cpyPtr-1;
-    command_len--;
-  }
-
-  while ( len > 0 && cpyPtr < &command_buff.back() )
-  {
-    // check for numeric character, enter, '-', or ESC.
-    if( isdigit(*buff) )
-    {
-      // copy the char from the input buffer
-      *cpyPtr++ = *buff;
-      command_len++;
-    }
-    // copy in '-' if it is the first character
-    else if( *buff == '-' && cpyPtr == command_buff.data())
-    {
-      // copy the char from the input buffer
-      *cpyPtr++ = *buff;
-      command_len++;
-    }
-    // check for control sequence
-    else if (*buff== '\n' || *buff == '\r' || *buff == '\x1b')
-    {
-      // copy the char from the input buffer
-      *cpyPtr++ = *buff;
-      command_len++;
-
-      // exit the loop
-      break;
-    }
-    // check for backspace or delete
-    else if(*buff == '\b' || *buff == '\x7F')
-    {
-      // if we haven't backspaced to the beginning of the buffer, decriment the parsed 
-      // command
-      if (command_len > 0)
-      {
-        cpyPtr--;
-        command_len--;
-      }
-    }
-
-    // go to the next spot in the buffer 
-    buff++;
-    len--;
-  }
-
-  // null terminate the string thus far
-  *cpyPtr = '\0';
-
-  // make sure we null terminate
-  command_buff.back() = '\0';
+  command_parser.add_to_buffer(buff, len); 
 }
 
-int ComputerInterface::parse_command() 
+menu_cmd_t ComputerInterface::parse_command() 
 {
-  int menu_num = -1;
-
-  // loop through the command string and make sure the characters are
-  // numeric or accepted commands
-  char *cmd = command_buff.data();     
-  int cmd_len = 0;
-  
-  while (*cmd != '\0')
-  {
-    // check for enter or ESC
-    if(*cmd == '\n' || *cmd == '\r' || *cmd == '\x1B')
-    {
-      // escape character
-      if(*cmd == '\x1B')
-      {
-        menu_num = -2;
-      }
-      else 
-      {
-        // grab the integer from the buffer
-        if(sscanf(command_buff.data(), "%d", &menu_num) !=1 )
-          menu_num = -1;
-      }
-
-      // clear the buffer
-      command_len = 0;
-      command_buff.fill('\0');
-
-      // done with the loop
-      break;
-    }
-
-    // move on to the next command character
-    cmd++;
-    cmd_len++;
-  }
+  auto command = command_parser.parse_buffer();
 
   const uint8_t BUFFSIZE = 125; // same length as the USB buffer
   char buff[BUFFSIZE] = {0};
 
   // print the command buffer
-  HAL_Delay(1);
-  my_sprintf(buff,
-  "%d\n\r"
-  "%s\n\r",
-  menu_num,
-  command_buff.data());
-  CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
+  strcpy(buff, command_parser.data());
+  println(buff);
 
-  return menu_num;
+  return command;
 }
 
 void ComputerInterface::display_settings()
 {
-  static int command = -1;
+  static menu_cmd_t command = {menu_commands_t::KEEP_MENU, 0};
 
   menu.display_menu(command);
   command = parse_command();
