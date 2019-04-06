@@ -30,6 +30,7 @@ public:
 
 private:
   const char* get_menu_item_str(const MenuItem &item, int item_num, char* buff) const;
+  void display_menu_heading(const MenuItem &item, char* buff);
   void list_menu_items(const MenuItem &item, char *buff);
   void display_leaf_item(const MenuItem &item, int command, char *buff);
 

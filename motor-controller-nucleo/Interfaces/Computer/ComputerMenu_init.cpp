@@ -11,7 +11,7 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
   main_menu_items[0] = MenuItem{"Limits", "", default_param, limits_menu_items.data(), &main_menu, limits_menu_items.size()};
   main_menu_items[1] = MenuItem{"General Settings", "", default_param, general_setting_items.data(), &main_menu, general_setting_items.size()};
   main_menu_items[2] = MenuItem{"Motor Settings", "", default_param, motor_setting_items.data(), &main_menu, motor_setting_items.size()};
-  main_menu_items[3] = MenuItem{"Save Settings", "Save settings to flash", mc_param::SAVE_SETTINGS, &main_menu, nullptr, 0};
+  main_menu_items[3] = MenuItem{"Save Settings", "Save settings to flash", mc_param::SAVE_SETTINGS, nullptr, &main_menu, 0};
 
   // make references to the main menu items (to the sub menus)
   const auto limits_menu  = &main_menu_items[0];
@@ -20,16 +20,16 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
 
   // setup the limits menu
   limits_menu_items[0] = MenuItem{"Up", "", default_param, &main_menu, &main_menu, 1};
-  limits_menu_items[1] = MenuItem{"Max Current", "", mc_param::CURRENT_LIMIT, nullptr, &main_menu, 0};
-  limits_menu_items[2] = MenuItem{"Max Velocity", "", mc_param::VELOCITY_LIMIT, nullptr, &main_menu, 0};
-  limits_menu_items[3] = MenuItem{"Max Acceleration", "", mc_param::ACCELERATION_LIMIT, nullptr, &main_menu, 0};
+  limits_menu_items[1] = MenuItem{"Max Current", "", mc_param::CURRENT_LIMIT, nullptr, limits_menu, 0};
+  limits_menu_items[2] = MenuItem{"Max Velocity", "", mc_param::VELOCITY_LIMIT, nullptr, limits_menu, 0};
+  limits_menu_items[3] = MenuItem{"Max Acceleration", "", mc_param::ACCELERATION_LIMIT, nullptr, limits_menu, 0};
 
   // setup the general settings menu
   general_setting_items[0] = MenuItem{"Up", "", default_param, &main_menu, &main_menu, 1};
-  general_setting_items[1] = MenuItem{"Motor Control Mode", "", mc_param::MOTOR_MODE, nullptr, &main_menu, 0};
-  general_setting_items[2] = MenuItem{"Motor Direction", "", mc_param::MOTOR_DIRECTION, nullptr, &main_menu, 0};
-  general_setting_items[3] = MenuItem{"Motor Controller CAN ID", "", mc_param::CONTROLLER_CAN_ID, nullptr, &main_menu, 0};
-  general_setting_items[4] = MenuItem{"Throttle CAN ID", "", mc_param::THROTTLE_CAN_ID, nullptr, &main_menu, 0};
+  general_setting_items[1] = MenuItem{"Motor Control Mode", "", mc_param::MOTOR_MODE, nullptr, general_menu, 0};
+  general_setting_items[2] = MenuItem{"Motor Direction", "", mc_param::MOTOR_DIRECTION, nullptr, general_menu, 0};
+  general_setting_items[3] = MenuItem{"Motor Controller CAN ID", "", mc_param::CONTROLLER_CAN_ID, nullptr, general_menu, 0};
+  general_setting_items[4] = MenuItem{"Throttle CAN ID", "", mc_param::THROTTLE_CAN_ID, nullptr, general_menu, 0};
 
   // setup the motor menu
   motor_setting_items[0] = MenuItem{"Up", "", default_param, &main_menu, &main_menu, 1}; 
