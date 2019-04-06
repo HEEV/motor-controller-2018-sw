@@ -211,6 +211,13 @@ void ComputerInterface::display_settings()
   
 }
 
+void ComputerInterface::println(char *buff)
+{
+  strcat(buff, "\n\r");
+  CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
+  HAL_Delay(1);
+}
+
 const char* ComputerInterface::access_setting_value(char *buff, MotorControllerParameter_t param, bool write, std::int32_t value)
 {
   // so I don't have to type MotorControllerParameter_t every time

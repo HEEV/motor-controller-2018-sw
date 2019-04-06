@@ -74,6 +74,8 @@ public:
 
     void display_settings();
 
+    void println(char* buff);
+
     const char* access_setting_value(char* buff, MotorControllerParameter_t param, bool write, std::int32_t value);
 
     // disallow default initilization and copying
@@ -81,7 +83,6 @@ public:
     ComputerInterface(const ComputerInterface &cpy) = delete;
     ComputerInterface operator=(const ComputerInterface &rhs) = delete;
 private:
-    void println(char* buff, std::uint16_t len);
     void transmit_packet(const MotorControllerPacket_t &packet) const;
     int parse_command();
 
