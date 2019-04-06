@@ -39,6 +39,7 @@ CXX_SOURCES = \
 Core/Main/main.cpp \
 Core/Main/Startup.cpp \
 Core/Main/Callbacks.cpp \
+Core/Main/CanCallbacks.cpp \
 Interfaces/Hardware/TMC4671Interface.cpp \
 Interfaces/Computer/ComputerInterface.cpp \
 Interfaces/Computer/ComputerMenu.cpp \
