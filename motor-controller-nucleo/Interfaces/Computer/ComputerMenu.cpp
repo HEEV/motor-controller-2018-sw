@@ -13,7 +13,7 @@ extern "C" {
 
 // constructor in ComputerMenu_init.cpp
 
-void ComputerMenu::display_menu(int menu_num)
+void ComputerMenu::display_menu(menu_cmd_t command)
 {
   // Make my buffer the same length as the USB buffer (defined in usbd_cdc_if.c)
   const uint8_t BUFFSIZE = 128; // same length as the USB buffer
@@ -24,17 +24,17 @@ void ComputerMenu::display_menu(int menu_num)
   HAL_Delay(1);
 
   auto is_leaf_item = current_menu->sub_menu == nullptr;
+  auto is_cmd_menu_range = !(command.data >= current_menu->sub_menu_items || command.data < 0);
 
   // what to do if the recieved command is invalid or KEEP_MENU
-  if (menu_num == KEEP_MENU || 
-      menu_num < UP_LEVEL   ||
-      menu_num >= current_menu->sub_menu_items)
+  if (command.cmd == menu_commands_t::KEEP_MENU || 
+     (command.cmd == menu_commands_t::DATA && !is_cmd_menu_range)) 
   {
     // keep the current menu
     current_menu = current_menu;
   }
   // handle the UP_MENU case
-  else if (menu_num == UP_LEVEL)
+  else if (command.cmd == menu_commands_t::UP_LEVEL)
   {
     // if not the main menu, go up a level
     auto is_main_menu = current_menu->parent_menu == nullptr;
@@ -42,15 +42,15 @@ void ComputerMenu::display_menu(int menu_num)
     {
       // go up
       current_menu = current_menu->parent_menu;
+      command.cmd = menu_commands_t::KEEP_MENU;
     }
   }
   // what to do if the data is valid and not on a leaf node
   else if (!is_leaf_item) {
     // go to the user selected menu
-    current_menu = &current_menu->sub_menu[menu_num];
+    current_menu = &current_menu->sub_menu[command.data];
 
-    // make sure we don't set the value accidently
-    menu_num = KEEP_MENU;
+    command.cmd = menu_commands_t::KEEP_MENU;
 
     // if the user selected the "UP" option, go to the actual menu
     if (current_menu->parent_menu == current_menu->sub_menu){
@@ -58,9 +58,11 @@ void ComputerMenu::display_menu(int menu_num)
     }
   }
 
+  // double check that we are a leaf item
+  is_leaf_item = current_menu->sub_menu == nullptr;
   if (is_leaf_item)
   {
-    display_leaf_item(*current_menu, menu_num, buff);
+    display_leaf_item(*current_menu, command, buff);
   }
   else 
   {
@@ -128,16 +130,16 @@ void ComputerMenu::list_menu_items(const MenuItem& menu, char *buff) {
   print(buff);
 }
 
-void ComputerMenu::display_leaf_item(const MenuItem& menu, int command, char *buff)
+void ComputerMenu::display_leaf_item(const MenuItem& menu, menu_cmd_t command, char *buff)
 {
   display_menu_heading(menu, buff);
 
   bool write_setting = false;
   int32_t write_value = 0;
-  if (command != KEEP_MENU)
+  if (command.cmd == menu_commands_t::DATA)
   {
     write_setting = true;
-    write_value = command;
+    write_value = command.data;
   }
   
   strcpy(buff, compInterface->access_setting_value(buff, menu.param, write_setting, write_value));

@@ -42,6 +42,7 @@ Core/Main/Callbacks.cpp \
 Core/Main/CanCallbacks.cpp \
 Interfaces/Hardware/TMC4671Interface.cpp \
 Interfaces/Computer/ComputerInterface.cpp \
+Interfaces/Computer/CommandParser.cpp \
 Interfaces/Computer/ComputerMenu.cpp \
 Interfaces/Computer/ComputerMenu_init.cpp \
 CanNode/CanNode.cpp \
