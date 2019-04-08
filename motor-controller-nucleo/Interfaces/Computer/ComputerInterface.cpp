@@ -150,7 +150,9 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       gen_settings.ControllerCanId = (std::uint16_t) value;
       // TODO notify that this requires a save and restart to take effect
     } 
-    my_sprintf(buff, "%u", gen_settings.ControllerCanId);
+    my_sprintf(buff, "%u (0x%X)", 
+      gen_settings.ControllerCanId,
+      gen_settings.ControllerCanId);
     return buff;
   }
 
@@ -161,7 +163,9 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       gen_settings.ThrottleCanId = (std::uint16_t) value;
       // TODO notify that this requires a save and restart to take effect
     } 
-    my_sprintf(buff, "%u", gen_settings.ThrottleCanId);
+    my_sprintf(buff, "%u (0x%X)", 
+      gen_settings.ThrottleCanId, 
+      gen_settings.ThrottleCanId);
     return buff;
   }
 
