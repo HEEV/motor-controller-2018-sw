@@ -9,9 +9,10 @@
 
 MEMORY
 {
-	rom (rx)   : ORIGIN = 0x08000000, LENGTH = 512K
-	ccmram(rw) : ORIGIN = 0x10000000, LENGTH = 16K
-	ram (rwx)  : ORIGIN = 0x20000000, LENGTH = 64K
+	rom (rx)    		: ORIGIN = 0x08000000, LENGTH = 510K
+	mc_settings(r) 	: ORIGIN = 0x0807F800, LENGTH = 2K
+	ccmram(rw)  		: ORIGIN = 0x10000000, LENGTH = 16K
+	ram (rwx)   		: ORIGIN = 0x20000000, LENGTH = 64K
 }
 
 /* Highest address of the user mode stack */

@@ -7,6 +7,7 @@
 #include "stm32f3xx_hal_conf.h"
 #include "settings_structs.h"
 #include "TMC4671Interface.h"
+#include <SettingsManager.h>
 #include <CanNode.h>
 
 // external ADC global variables
@@ -92,8 +93,11 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
 void HAL_WWDG_EarlyWakeupCallback(WWDG_HandleTypeDef* hwwdg) 
 {
-  UNUSED(hwwdg);
-
+  // keep the watchdog running during a flash write
+  if (SettingsManager::flash_write) 
+  {
+    HAL_WWDG_Refresh(hwwdg);
+  }
   // set pin high
   HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
   // turn of TMC4671 outputs

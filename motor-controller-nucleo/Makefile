@@ -41,6 +41,7 @@ Core/Main/Startup.cpp \
 Core/Main/Callbacks.cpp \
 Core/Main/CanCallbacks.cpp \
 Interfaces/Hardware/TMC4671Interface.cpp \
+Interfaces/Hardware/SettingsManager.cpp \
 Interfaces/Computer/ComputerInterface.cpp \
 Interfaces/Computer/CommandParser.cpp \
 Interfaces/Computer/ComputerMenu.cpp \
@@ -197,7 +198,7 @@ CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 #######################################
 # link script
 #LDSCRIPT = STM32F303RETx_FLASH.ld
-LDSCRIPT = ld.stm32.basic
+LDSCRIPT = motor-controller.ld 
 
 # libraries
 LIBS = -lc -lm -lnosys 
