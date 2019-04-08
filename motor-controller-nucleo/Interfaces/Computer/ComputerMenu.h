@@ -47,7 +47,7 @@ private:
   std::array<MenuItem, 4> open_loop_items;
   std::array<MenuItem, 7> motor_setting_items;
   std::array<MenuItem, 5> hall_setting_items;
-  std::array<MenuItem, 5> general_setting_items;
+  std::array<MenuItem, 6> general_setting_items;
 
   const MenuItem *current_menu;
   ComputerInterface *compInterface;

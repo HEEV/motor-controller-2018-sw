@@ -30,6 +30,7 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
   general_setting_items[2] = MenuItem{"Motor Direction", "", mc_param::MOTOR_DIRECTION, nullptr, general_menu, 0};
   general_setting_items[3] = MenuItem{"Motor Controller CAN ID", "", mc_param::CONTROLLER_CAN_ID, nullptr, general_menu, 0};
   general_setting_items[4] = MenuItem{"Throttle CAN ID", "", mc_param::THROTTLE_CAN_ID, nullptr, general_menu, 0};
+  general_setting_items[5] = MenuItem{"Use Analog Input", "", mc_param::USE_ANALOG, nullptr, general_menu, 0};
 
   // setup the motor menu
   motor_setting_items[0] = MenuItem{"Up", "", default_param, &main_menu, &main_menu, 1}; 
