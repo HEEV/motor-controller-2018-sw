@@ -9,7 +9,7 @@
         "array": "cpp",
         "string_view": "cpp",
         "cstring": "cpp",
-        "*.tcc": "cpp"
+        "tmc4671.h": "c"
     },
     "editor.tabSize": 2
 }
