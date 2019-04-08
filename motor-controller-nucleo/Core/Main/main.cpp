@@ -22,6 +22,7 @@
 #include "settings_structs.h"
 #include <ComputerInterface.h>
 #include <TMC4671Interface.h>
+#include <SettingsManager.h>
 
 #include <CanNode.h>
 #include <Startup.h>
@@ -59,6 +60,8 @@ CanNode* hmc_rpm_node;
 CanNode* hbatt_current_node;
 CanNode* hbatt_voltage_node;
 
+SettingsManager* hsettings_manager;
+
 /* Private function prototypes -----------------------------------------------*/
 int16_t thermistorTemperature(uint16_t adcVal);
 
@@ -83,6 +86,11 @@ int main(void)
   // initilize most of the global variables and
   // brings up the motor controller settings struct
   motor_controller_init();
+
+  // load settings from flash
+  SettingsManager sm(hmc_settings);
+  hsettings_manager = &sm;
+
   // intilize CAN variables
   auto base_id = mc_settings.General.ControllerCanId;
   auto throttle_id = mc_settings.General.ThrottleCanId;

@@ -1,5 +1,6 @@
 #include "ComputerInterface.h"
 #include <stm32f3xx_hal.h>
+#include "SettingsManager.h"
 
 // for tfp_sprintf()
 #define PRINTF_LONG_SUPPORT
@@ -29,6 +30,7 @@ using int32_t = std::int32_t;
 using uint32_t = std::uint32_t;
 
 extern UART_HandleTypeDef huart2;
+extern SettingsManager* hsettings_manager;
 
 // wrapper for a class function
 void computerInterface_update_buffer(void* piface, const uint8_t* buff, uint32_t len)
@@ -381,7 +383,8 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
   case MotorParams::SAVE_SETTINGS :
     if (write) 
     { 
-      // call the save settings function
+      hsettings_manager->save_settings();
+      return "saved";
     }
     return "";
     break;

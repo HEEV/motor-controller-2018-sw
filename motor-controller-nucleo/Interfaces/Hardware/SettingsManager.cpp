@@ -4,6 +4,7 @@
 #include <cstring>
 
 bool SettingsManager::flash_write = false;
+MotorControllerValues_t SettingsManager::flash_settings;
 
 SettingsManager::SettingsManager(MotorControllerValues_t* user_values)
 {
@@ -50,6 +51,9 @@ void SettingsManager::save_settings()
 
   tmp_values.tmc4671.Setpoint = 0;
 
+  // set flag to make sure watchdog timer doesn't timeout
+  flash_write = true;
+
 	//unlock the flash for writing
 	flashUnlock();
 
@@ -61,5 +65,8 @@ void SettingsManager::save_settings()
 
 	//relock the flash
 	flashLock();
+
+  // re-enable watchdog timer
+  flash_write = false;
 
 }
