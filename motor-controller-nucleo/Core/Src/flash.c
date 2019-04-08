@@ -30,17 +30,17 @@ void flashLock() {
 FlashError flashErasePage(uint32_t addr) {
 	FlashError status;
 	FLASH->CR |= FLASH_CR_PER;              // Page erase operation
-	FLASH->AR = addr;                  // Set the address to the page to be written
-	FLASH->CR |= FLASH_CR_STRT;				// Start the page erase
+	FLASH->AR = addr;                  			// Set the address to the page to be written
+	FLASH->CR |= FLASH_CR_STRT;							// Start the page erase
 
 	while ((FLASH->SR & FLASH_SR_BSY) != 0);// Wait until page erase is done
 
 	if ((FLASH->SR & FLASH_SR_EOP) != 0){   // If the end of operation bit is set
-		FLASH->SR |= FLASH_SR_EOP;          // Clear it, the operation was successful
+		FLASH->SR |= FLASH_SR_EOP;      	    // Clear it, the operation was successful
 		status = FLASH_OK;
 	}
 	else if(FLASH->SR & FLASH_SR_PGERR){    // Otherwise there was an error condition
-		FLASH->SR |= FLASH_SR_PGERR;        // Clear programming error
+		FLASH->SR |= FLASH_SR_PGERR;    	    // Clear programming error
 		status = FLASH_PRG_ERROR;
 	}
 	else{                                   // Must be Santa! No, write protection error.
@@ -112,18 +112,20 @@ FlashError flashWrite_32(uint32_t addr, uint32_t data){
 void flashWriteMemBlock(uint32_t addr, uint8_t* data, uint16_t len){
 	//writing in 16 bit incriments, advance by 2 chars
 	int i;
+	uint32_t word_addr = addr;
 	for(i=0; i<len-1; i+=2){ 
 		//archatecture is little-endian (i think)
 		uint16_t word = data[i] | (data[i+1] << 8);
-		flashWrite_16(addr, word);
+		flashWrite_16(word_addr, word);
+		word_addr+=2;
 	}
 	//if odd pad last byte with a null character
 	if(len & 1){
 		uint16_t word = data[i] | (0x00 << 8);
-		flashWrite_16(addr, word);
+		flashWrite_16(word_addr, word);
 	}
 	else {
 		//add null character
-		flashWrite_16(addr, 0x0000);
+		flashWrite_16(word_addr, 0x0000);
 	}
 }

@@ -22,6 +22,10 @@
 #ifndef _FLASH_H_
 #define _FLASH_H_
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stm32f3xx.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -63,5 +67,9 @@ FlashError flashWrite_32(uint32_t addr, uint32_t data);
 /// \brief Write a block of memory to flash
 void flashWriteMemBlock(uint32_t addr, uint8_t* data, uint16_t len);
 //@}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_FLASH_H_
