@@ -21,14 +21,6 @@
 
 /* Memory regions MUST be defined in the ld script which includes this one. */
 
-/* Highest address of the user mode stack */
-_estack = 0x20010000;    /* end of RAM */
-/* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x200;      /* required amount of heap  */
-_Min_Stack_Size = 0x400; /* required amount of stack */
-
-/* Enforce emmition of the vector table. */
-EXTERN (vector_table)
 
 /* Define the entry point of the output file. */
 ENTRY(Reset_Handler)
@@ -44,15 +36,28 @@ SECTIONS
   } >rom
 
 	.text : {
-		*(.isr_vecctor)	/* Vector table */
 		. = ALIGN(4);
-		*(.text*)	/* Program code */
-		*(.rodata*)	/* Read-only data */
-    *(.glue_7)         /* glue arm to thumb code */
-    *(.glue_7t)        /* glue thumb to arm code */
+		*(.text)						/* Program code */
+		*(.text*)						/* Program code */
+    *(.glue_7)          /* glue arm to thumb code */
+    *(.glue_7t)         /* glue thumb to arm code */
     *(.eh_frame)
+
+		KEEP (*(.init))
+		KEEP (*(.fini))
+
+		. = ALIGN(4);
+		_etext = .;
+	} >rom
+
+	.rodata :
+	{
+		. = ALIGN(4);
+	  *(.rodata)					/* Read-only data */
+	  *(.rodata*)					/* Read-only data */
 		. = ALIGN(4);
 	} >rom
+
 
 	/* C++ Static constructors/destructors, also used for __attribute__
 	 * ((constructor)) and the likes */
@@ -81,17 +86,18 @@ SECTIONS
 	 * Another section used by C++ stuff, appears when using newlib with
 	 * 64bit (long long) printf support
 	 */
-	.ARM.extab : {
-		*(.ARM.extab*)
+	.ARM.extab : 
+	{
+		*(.ARM.extab* .gnu.linkonce.armextab.*)
 	} >rom
-	.ARM.exidx : {
+
+	.ARM.exidx : 
+	{
 		__exidx_start = .;
 		*(.ARM.exidx*)
 		__exidx_end = .;
 	} >rom
 
-	. = ALIGN(4);
-	_etext = .;
 
 	/* ram, but not cleared on reset. eg:  boot/app comms */
 	.noinit (NOLOAD) : {
@@ -104,16 +110,37 @@ SECTIONS
 	.data : {
 		. = ALIGN(4);
 		_sdata = .;
-		*(.data*)	/* Read-write initialized data */
-		*(.ramfunctions) /* functions we need/want to run from ram */
+
+		*(.data)					/* Read-write initialized data */
+		*(.data*)					/* Read-write initialized data */
+		*(.ramfunctions) 	/* functions we need/want to run from ram */
+
+		. = ALIGN(4);
 		_edata = .;
 	} >ram AT >rom
 
-  . = ALIGN(4);
+  _siccmram = LOADADDR(.ccmram);
+
+  .ccmram :
+  {
+    . = ALIGN(4);
+    _sccmram = .;       /* create a global symbol at ccmram start */
+    *(.ccmram)
+    *(.ccmram*)
+    
+    . = ALIGN(4);
+    _eccmram = .;       /* create a global symbol at ccmram end */
+  } >ccmram AT> rom 
+
+
+	. = ALIGN(4);
 	.bss : {
     _sbss = .;
-		*(.bss*)	/* Read-write zero initialized data */
+		__bss_start__ = _sbss;
+		*(.bss)				/* Read-write zero initialized data */
+		*(.bss*)			/* Read-write zero initialized data */
 		*(COMMON)
+
 		. = ALIGN(4);
 		_ebss = .;
     __bss_end__ = _ebss;
@@ -130,6 +157,5 @@ SECTIONS
     . = ALIGN(8);
   } >ram
 
-
-	. = ALIGN(4);
+  .ARM.attributes 0 : { *(.ARM.attributes) }
 }
