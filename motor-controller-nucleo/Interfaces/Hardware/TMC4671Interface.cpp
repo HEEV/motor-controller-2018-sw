@@ -212,8 +212,8 @@ static void adc_init()
   // const uint8_t ADC_I_WY_SELECT = 2;
 
   // constants for Trinamic's power board
-  const uint16_t ADC_PHASE1_SCALE = 105;
-  const uint16_t ADC_PHASE2_SCALE = 99;
+  const uint16_t ADC_PHASE1_SCALE = 105/2;
+  const uint16_t ADC_PHASE2_SCALE = 99/2;
   const int16_t ADC_PHASE1_OFFSET = 33548;
   const int16_t ADC_PHASE2_OFFSET = 33587;
   const uint8_t ADC_I0_SELECT = 0;
@@ -278,6 +278,33 @@ static void pwm_init()
   temp_reg = PWM_CHOP_MODE;
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_SV_CHOP, temp_reg);
 }
+
+
+
+float TMC4671Interface::getMotorCurrent()
+{
+  // get the raw current values (2mA incriments) 
+  int32 raw_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
+
+  // rescale to get the current into mA
+  return static_cast<float>(raw_current) * 2.0;
+}
+
+float TMC4671Interface::getBatteryCurrent()
+{
+  return 0.0;
+}
+
+float TMC4671Interface::getBatteryVoltage()
+{
+  return 0.0;
+}
+
+int32_t TMC4671Interface::getMotorRPM()
+{
+  return tmc4671_getActualVelocity(TMC_DEFAULT_MOTOR)/MotorConstant;
+}
+
 // --------------------- Trinamic Library Helper function -------------------------
 
 u8 tmc4671_readwriteByte(u8 motor, u8 data, u8 lastTransfer)

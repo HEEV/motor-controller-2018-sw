@@ -27,7 +27,7 @@
 #include <Startup.h>
 #include "CanCallbacks.h"
 
-#define MC_DIR_ID     (static_cast<uint16_t>(hmc_settings->General.ControllerCanId + 4) )
+#define MC_DIR_ID     (static_cast<uint16_t>(hmc_settings->General.ControllerCanId + 6) )
 #define MC_CMODE_ID   (static_cast<uint16_t>(MC_DIR_ID + 1 ) )
 #define MC_MAX_I_ID   (static_cast<uint16_t>(MC_CMODE_ID + 1) )
 #define MC_MAX_VEL_ID (static_cast<uint16_t>(MC_MAX_I_ID + 1) )
@@ -48,14 +48,27 @@ volatile uint16_t A_In2_ADCVal;
 volatile uint16_t MotorTemp_ADCVal;
 volatile uint16_t TransistorTemp_ADCVal;
 
-// global CAN watchdog
+// CAN variables 
 volatile uint16_t CAN_watchdog;
-
-// maximum value is 100ms
 const uint16_t MAX_CAN_WATCHDOG = 100;
 
+CanNode* hmc_node;
+CanNode* htemperature_node;
+CanNode* hmc_current_node;
+CanNode* hmc_rpm_node;
+CanNode* hbatt_current_node;
+CanNode* hbatt_voltage_node;
+
 /* Private function prototypes -----------------------------------------------*/
-int thermistorTemperature(uint16_t adcVal);
+int16_t thermistorTemperature(uint16_t adcVal);
+
+enum class can_group_t : uint8_t {
+  TEMPERATURE,
+  MOTOR_CURRENT_RPM,
+  BATTERY_CURRENT_VOLTAGE
+};
+
+void can_send_data(can_group_t group);
 
 /**
   * @brief  The application entry point.
@@ -73,15 +86,28 @@ int main(void)
   // intilize CAN variables
   auto base_id = mc_settings.General.ControllerCanId;
   auto throttle_id = mc_settings.General.ThrottleCanId;
-
-  CanNode node(base_id, rtrHandle);
+  // setup the nodes the +4 incriment is because each node
+  // reserves 4 ids
+  CanNode mc_node(base_id, rtrHandle);
+  CanNode temperature_node (base_id+1, rtrHandle);
+  CanNode mc_current_node  (base_id+2, rtrHandle);
+  CanNode mc_rpm_node      (base_id+3, rtrHandle);
+  CanNode batt_current_node(base_id+4, rtrHandle);
+  CanNode batt_voltage_node(base_id+5, rtrHandle);
+  
+  //setup node references
+  htemperature_node   = &temperature_node;
+  hmc_current_node    = &mc_current_node;
+  hmc_rpm_node        = &mc_rpm_node;
+  hbatt_current_node  = &batt_current_node;
+  hbatt_voltage_node  = &batt_voltage_node;
 
   // add filters
-  node.addFilter_id(
+  mc_node.addFilter_id(
     {MC_ENABLE_ID, false},
-    {throttle_id, false},
-    {MC_DIR_ID, false},
-    {MC_CMODE_ID, false},
+    {throttle_id,  false},
+    {MC_DIR_ID,    false},
+    {MC_CMODE_ID,  false},
     mc_enable_handle,
     mc_throttle_handle,
     mc_dir_handle,
@@ -89,8 +115,8 @@ int main(void)
   );
 
   // add more filters
-  node.addFilter_id(
-    {MC_MAX_I_ID, false}, 
+  mc_node.addFilter_id(
+    {MC_MAX_I_ID,   false}, 
     {MC_MAX_VEL_ID, false}, 
     {MC_MAX_ACC_ID, false}, 
     {MC_MAX_ACC_ID, false}, 
@@ -123,6 +149,9 @@ int main(void)
   int8_t ms_cnt25 = 0;
   int8_t ms_cnt50 = 0;
   int8_t ms_cnt100 = 0;
+
+  //enum for simple state machine
+  can_group_t group = can_group_t::TEMPERATURE;
 
 
   // enable the outputs from the tmc4671
@@ -158,6 +187,26 @@ int main(void)
     if (ms_cnt50 >= 50) {
       tmc4671.set_setpoint(Throttle_ADCVal - 723);
 
+      // send CAN values
+      can_send_data(group);
+
+      //select which group to send next
+      switch(group)
+      {
+        default:
+        case can_group_t::TEMPERATURE: 
+          group = can_group_t::MOTOR_CURRENT_RPM;
+        break;
+
+        case can_group_t::MOTOR_CURRENT_RPM:
+          group = can_group_t::BATTERY_CURRENT_VOLTAGE;
+        break;
+
+        case can_group_t::BATTERY_CURRENT_VOLTAGE:
+          group = can_group_t::TEMPERATURE;
+        break;
+      }
+
       //reset count
       ms_cnt50 = 0;
     }
@@ -165,8 +214,6 @@ int main(void)
       comp_interface.display_settings();
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
-      //can_data.data = Throttle_ADCVal;
-      // HAL_CAN_AddTxMessage(&hcan, &tx_header, can_data.u8_data, &can_mailbox);
 
       //reset count
       ms_cnt100 = 0;
@@ -175,7 +222,7 @@ int main(void)
 }
 
 
-int thermistorTemperature(uint16_t adcVal)
+int16_t thermistorTemperature(uint16_t adcVal)
 {
   const float THERMISTOR_NOMINAL = 10000.0; // 10K
   const float BCOEFFICIENT = 3950; // a number picked out of thin air
@@ -192,13 +239,50 @@ int thermistorTemperature(uint16_t adcVal)
   steinhart = 1.0 / steinhart;                 // Invert
   steinhart -= 273.15;                         // convert to C
 
-  int tempurature = steinhart * 100;
+  int16_t tempurature = steinhart * 100;
   return tempurature;
 }
 
-/* USER CODE BEGIN 4 */
+void can_send_data(can_group_t group){
+  switch(group)
+  {
+    case can_group_t::TEMPERATURE:
+    {
+      int16_t temperatures[] = 
+      { 
+        thermistorTemperature(MotorTemp_ADCVal),
+        thermistorTemperature(TransistorTemp_ADCVal)
+      };
 
-/* USER CODE END 4 */
+      htemperature_node->sendDataArr_int16(temperatures, 2);
+      break;
+    }
+
+    default:
+    case can_group_t::MOTOR_CURRENT_RPM:
+    {
+      // get the values from the tmc4671
+      int32_t rpm     = htmc4671->getMotorRPM();
+      float   current = htmc4671->getMotorCurrent();
+      
+      hmc_rpm_node->sendData_int32(rpm);
+      hmc_current_node->sendData_float(current/1000);
+      break;
+    }
+
+    case can_group_t::BATTERY_CURRENT_VOLTAGE:
+    {
+      // get the values from the tmc4671
+      float voltage = htmc4671->getMotorRPM();
+      float current = htmc4671->getMotorCurrent();
+
+      hbatt_voltage_node->sendData_float(voltage/1000);
+      hbatt_current_node->sendData_float(current/1000);
+      break;
+    }
+  }  
+}
+
 
 /**
   * @brief  This function is executed in case of error occurrence.

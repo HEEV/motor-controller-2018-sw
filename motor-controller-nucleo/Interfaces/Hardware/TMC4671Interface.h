@@ -81,6 +81,18 @@ public:
      */
     void disable();
 
+
+    /**
+     * 
+     */
+    float getMotorCurrent();
+
+    float getBatteryCurrent();
+
+    float getBatteryVoltage();
+
+    std::int32_t getMotorRPM();
+
     // disallow default initilization and copying
     TMC4671Interface() = delete;
     TMC4671Interface(const TMC4671Interface &cpy) = delete;

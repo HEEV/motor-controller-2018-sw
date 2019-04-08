@@ -27,7 +27,7 @@ extern void* hcomp_iface;
 extern MotorControllerValues_t* hmc_settings;
 extern TMC4671Interface* htmc4671;
 
-// external watchdog counter
+// external CAN variables 
 extern volatile uint16_t CAN_watchdog;
 
 // code to initilize the periprieals 
