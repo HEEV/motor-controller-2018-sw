@@ -27,6 +27,7 @@
 #include <CanNode.h>
 #include <Startup.h>
 #include "CanCallbacks.h"
+#include "Actions.h"
 
 #define MC_DIR_ID     (static_cast<uint16_t>(hmc_settings->General.ControllerCanId + 6) )
 #define MC_CMODE_ID   (static_cast<uint16_t>(MC_DIR_ID + 1 ) )
@@ -154,9 +155,9 @@ int main(void)
   // This will cause some missed updates or double updates.
   // The counter variable solves this by triggering when it is at or above the ammount of time required,
   // then clearing once the event has happened.
-  int8_t ms_cnt25 = 0;
-  int8_t ms_cnt50 = 0;
-  int8_t ms_cnt100 = 0;
+  int8_t  ms_cnt25 = 0;
+  int8_t  ms_cnt50 = 0;
+  int16_t ms_cnt200 = 0;
 
   //enum for simple state machine
   can_group_t group = can_group_t::TEMPERATURE;
@@ -172,11 +173,12 @@ int main(void)
     prev_time = time;
     time = HAL_GetTick();
     int8_t time_diff = static_cast<uint8_t> (time - prev_time);
+    bool use_analog = mc_settings.General.bool_settings.useAnalog;
 
     //update counters
     ms_cnt25 += time_diff;
     ms_cnt50 += time_diff;
-    ms_cnt100 += time_diff;
+    ms_cnt200 += time_diff;
 
     if (ms_cnt25 >= 25) {
       // clear the watchdog counter
@@ -184,7 +186,6 @@ int main(void)
       CanNode::checkForMessages();
 
       CAN_watchdog += 25;
-      bool use_analog = mc_settings.General.bool_settings.useAnalog;
       if (CAN_watchdog > MAX_CAN_WATCHDOG && !use_analog)
       {
         // disable TMC4671 outputs
@@ -193,7 +194,13 @@ int main(void)
       ms_cnt25 = 0;
     }
     if (ms_cnt50 >= 50) {
-      tmc4671.set_setpoint(Throttle_ADCVal - 723);
+      uint32_t DEADBAND = 25;
+      if(use_analog)
+      {
+        auto setpoint = get_analog_setpoint(Throttle_ADCVal);
+        if(setpoint < DEADBAND) setpoint = 0;
+        tmc4671.set_setpoint(setpoint);
+      } 
 
       // send CAN values
       can_send_data(group);
@@ -218,13 +225,13 @@ int main(void)
       //reset count
       ms_cnt50 = 0;
     }
-    if (ms_cnt100 >= 100) {
+    if (ms_cnt200 >= 200) {
       comp_interface.display_settings();
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
 
       //reset count
-      ms_cnt100 = 0;
+      ms_cnt200 = 0;
     }
   }
 }

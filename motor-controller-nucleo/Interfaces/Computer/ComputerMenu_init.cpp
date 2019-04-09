@@ -37,6 +37,8 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
   general_setting_items[4] = MenuItem{"Throttle CAN ID", "Select an ID to listen to for setpoints (requires a restart)",
                               mc_param::THROTTLE_CAN_ID, nullptr, general_menu, 0};
   general_setting_items[5] = MenuItem{"Use Analog Input", "1 for CAN setpoint, 0 for Throttle input", mc_param::USE_ANALOG, nullptr, general_menu, 0};
+  general_setting_items[6] = MenuItem{"Throttle Setup", "Put throttle at minimum, enter 1.\n\rThen put throttle at maximum and enter 1", 
+                              mc_param::ANALOG_SETUP, nullptr, general_menu, 0};
 
   // setup the motor menu
   motor_setting_items[0] = MenuItem{"Up", "", default_param, &main_menu, &main_menu, 1}; 
@@ -75,7 +77,7 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
   open_loop_items[3] = MenuItem{"Acceleration", "", mc_param::OPEN_LOOP_ACCELERATION, nullptr, open_loop_menu, 0};
 
   hall_setting_items[0] = MenuItem{"Up", "", default_param, motor_menu, motor_menu, 1};
-  hall_setting_items[1] = MenuItem{"Hall Polatrity", "0 for default polarity, 1 to invert polarity", mc_param::HALL_POLARITY, nullptr, hall_menu, 0};
+  hall_setting_items[1] = MenuItem{"Hall Polarity", "0 for default polarity, 1 to invert polarity", mc_param::HALL_POLARITY, nullptr, hall_menu, 0};
   hall_setting_items[2] = MenuItem{"Hall Direction", "0 for default direction, 1 for reverse direction", mc_param::HALL_DIRECTION, nullptr, hall_menu, 0};
   hall_setting_items[3] = MenuItem{"Mechanical Offset", "Default: 0\n\r Range: [-32768, 32767]", 
                             mc_param::HALL_MECH_OFFSET, nullptr, hall_menu, 0};

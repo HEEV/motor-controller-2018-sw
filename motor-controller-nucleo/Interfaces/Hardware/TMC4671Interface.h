@@ -65,7 +65,7 @@ public:
      * Torque mode:     set_point -> Motor Current (mA)  
      * Open loop mode:  ???
      */
-    void set_setpoint(std::int32_t set_point);
+    void set_setpoint(std::uint32_t set_point);
 
     /**
      * Enable the TMC4671 (turns on outputs to the power stage)

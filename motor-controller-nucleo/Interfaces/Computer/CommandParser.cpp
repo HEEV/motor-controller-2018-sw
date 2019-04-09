@@ -35,7 +35,8 @@ void CommandParser::add_to_buffer(const uint8_t *buff, uint32_t len)
       command_len++;
     }
     // check for control sequence
-    else if (*buff== '\n' || *buff == '\r' || *buff == '\x1b')
+    else if (*buff== '\n'    || *buff == '\r' || 
+             *buff == '\x1b' || *buff == 'u')
     {
       // copy the char from the input buffer
       *cpyPtr++ = *buff;
@@ -80,10 +81,11 @@ menu_cmd_t CommandParser::parse_buffer()
   while (*cmd != '\0')
   {
     // check for enter or ESC
-    if(*cmd == '\n' || *cmd == '\r' || *cmd == '\x1B')
+    if(*cmd == '\n'   || *cmd == '\r' || 
+       *cmd == '\x1b' || *cmd == 'u')
     {
       // escape character
-      if(*cmd == '\x1B')
+      if(*cmd == '\x1B' || *cmd == 'u')
         { user_cmd.cmd = menu_commands_t::UP_LEVEL; }
       else 
       {

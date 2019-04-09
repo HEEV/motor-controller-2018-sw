@@ -40,6 +40,7 @@ Core/Main/main.cpp \
 Core/Main/Startup.cpp \
 Core/Main/Callbacks.cpp \
 Core/Main/CanCallbacks.cpp \
+Core/Main/Actions.cpp \
 Interfaces/Hardware/TMC4671Interface.cpp \
 Interfaces/Hardware/SettingsManager.cpp \
 Interfaces/Computer/ComputerInterface.cpp \

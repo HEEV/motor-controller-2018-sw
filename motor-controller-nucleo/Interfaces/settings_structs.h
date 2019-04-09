@@ -98,14 +98,21 @@ enum class MotorControllerParameter_t : std::uint8_t {
 
     // settings that don't correspond to actual settings
     USE_ANALOG,
+    ANALOG_SETUP,
     HALL_AUTO_SETUP,
     SAVE_SETTINGS,
     NO_ACTION
 };
 
+struct range_t{
+    uint32_t min;
+    uint32_t max;
+};
+
 struct GeneralSettings_t {
     std::uint16_t ControllerCanId;
     std::uint16_t ThrottleCanId;
+    range_t ThrottleRange;
     struct {
         std::uint8_t useAnalog : 1;
     } bool_settings;

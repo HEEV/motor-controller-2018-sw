@@ -155,7 +155,7 @@ void ComputerMenu::display_menu_heading(const MenuItem& menu, char *buff)
 
     compInterface->println(buff);
   }
-  strcpy(buff, "\n\rUse the ESC key to go up");
+  strcpy(buff, "\n\rUse the ESC or \'u\' key to go up");
   compInterface->println(buff);
   compInterface->println(hline(buff));
 }

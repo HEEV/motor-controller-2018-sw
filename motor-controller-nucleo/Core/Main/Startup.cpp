@@ -32,6 +32,7 @@ void motor_controller_init()
   // Trinamic Power Board
   hmc_settings->General.ControllerCanId = 1000;
   hmc_settings->General.ThrottleCanId = 900;
+  hmc_settings->General.ThrottleRange = {723, 4096};
   hmc_settings->General.bool_settings.useAnalog = 1;
   hmc_settings->tmc4671.MotorDir = MotorDirection_t::FORWARD;
   hmc_settings->tmc4671.ControlMode = ControlMode_t::TORQUE;

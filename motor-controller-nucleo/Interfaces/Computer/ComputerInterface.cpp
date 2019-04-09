@@ -1,6 +1,7 @@
 #include "ComputerInterface.h"
 #include <stm32f3xx_hal.h>
 #include "SettingsManager.h"
+#include <Actions.h>
 
 // for tfp_sprintf()
 #define PRINTF_LONG_SUPPORT
@@ -382,6 +383,14 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       gen_settings.bool_settings.useAnalog = static_cast<std::uint8_t>(value == 1); 
     }
     return bit2Str( gen_settings.bool_settings.useAnalog );
+  }
+
+  case MotorParams::ANALOG_SETUP:
+  {
+    auto& throttle_range = gen_settings.ThrottleRange;
+    auto_throttle_setup(value);
+    my_sprintf(buff, "Min: %ld, Max: %ld", throttle_range.min, throttle_range.max);
+    return buff;
   }
 
   case MotorParams::SAVE_SETTINGS :

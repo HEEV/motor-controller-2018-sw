@@ -126,12 +126,9 @@ void TMC4671Interface::set_direction(MotorDirection_t dir)
 }
 
 // documented int the .h file
-void TMC4671Interface::set_setpoint(int32_t set_point)
+void TMC4671Interface::set_setpoint(uint32_t set_point)
 {
   // take the absolute value of the set point (direction determined by the Direction variable)
-  set_point = (set_point < 0) ? -set_point : set_point;
-  Setpoint = (Direction == MotorDirection_t::REVERSE) ? -set_point : set_point;
-  uint32_t tmc_setpoint = 0;
 
   // update settings struct
   Settings->Setpoint = Setpoint;
@@ -139,15 +136,26 @@ void TMC4671Interface::set_setpoint(int32_t set_point)
   switch (ControlMode) {
     default:
     case ControlMode_t::VELOCITY :
+    {
+      set_point = (set_point > INT32_MAX) ? INT32_MAX : set_point;
+      Setpoint = (Direction == MotorDirection_t::REVERSE) ? -set_point : set_point;
       // Note: this could be very dumb
-      tmc_setpoint = MotorConstant * Setpoint;
+      int32_t tmc_setpoint = MotorConstant * Setpoint;
       tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_VELOCITY_TARGET, tmc_setpoint);
-    break;
+      break;
+    }
 
     case ControlMode_t::TORQUE :
-      tmc_setpoint = Setpoint;
+    {
+      // divide by 2 to get into 2mA incriments
+      set_point = set_point / 2;  
+      // make sure we don't overflow
+      set_point = (set_point > INT16_MAX) ? INT16_MAX : set_point;
+      Setpoint = (Direction == MotorDirection_t::REVERSE) ? -set_point : set_point;
+      int16_t tmc_setpoint = Setpoint;
       tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_PID_TORQUE_FLUX_TARGET, BIT_16_TO_31, tmc_setpoint);
-    break;
+      break;
+    }
 
     case ControlMode_t::OPEN_LOOP :
     break;
