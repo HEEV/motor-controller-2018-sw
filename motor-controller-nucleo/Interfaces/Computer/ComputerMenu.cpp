@@ -127,13 +127,37 @@ void ComputerMenu::display_menu_heading(const MenuItem& menu, char *buff)
       my_sprintf(buff, "%s", menu.name_str);
       return buff; 
     }
-  }; 
+  };
 
-  get_menu_name(menu, buff);
+  // print a horizontal line
+  auto hline = [](char* buff)
+  {
+    std::fill(buff, buff+79, '-');
+    buff[79] = '\0';
+    return buff;
+  };
+
+  
+  compInterface->println(get_menu_name(menu, buff));
+  compInterface->println(hline(buff));
+
+  auto is_leaf_node = menu.sub_menu == nullptr;
+  if (is_leaf_node) {
+    my_sprintf(buff, "%s", menu.menu_description);
+    compInterface->println(buff);
+  }
+  else {
+    my_sprintf(
+      buff, 
+      "Enter a number between 0 and %d to select a submenu item", 
+      menu.sub_menu_items-1
+    );
+
+    compInterface->println(buff);
+  }
+  strcpy(buff, "\n\rUse the ESC key to go up");
   compInterface->println(buff);
-  std::fill(buff, buff+79, '-');
-  buff[79] = '\0';
-  compInterface->println(buff);
+  compInterface->println(hline(buff));
 }
 
 void ComputerMenu::list_menu_items(const MenuItem& menu, char *buff) {

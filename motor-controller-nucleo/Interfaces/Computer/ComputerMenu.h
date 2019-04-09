@@ -31,11 +31,19 @@ public:
   const static int UP_LEVEL = -2;
 
 private:
+  // manage our position in the menu
   bool navigate_menu(menu_cmd_t command);
 
+  // print the formatted name and value of a menu item
   const char* get_menu_item_str(const MenuItem &item, int item_num, char* buff) const;
+
+  // print the menu title and the secondary string for the menu
   void display_menu_heading(const MenuItem &item, char* buff);
+
+  // list sub-menu items
   void list_menu_items(const MenuItem &item, char *buff);
+
+  // print the leaf item
   void display_leaf_item(const MenuItem &item, menu_cmd_t command, char *buff);
 
   MenuItem main_menu;
