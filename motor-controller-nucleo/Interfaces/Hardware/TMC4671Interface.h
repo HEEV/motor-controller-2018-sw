@@ -99,6 +99,34 @@ public:
     TMC4671Interface operator=(const TMC4671Interface &rhs) = delete;
 
 private:
+    static void hall_effect_init(const TMC4671Settings_t &motor_settings);
+    static void adc_init();
+    static void pwm_init();
+
+    // constant ADC settings
+
+    // constants for the Trinamic Power board
+    const static uint16_t ADC_PHASE1_SCALE = 105/2;
+    const static uint16_t ADC_PHASE2_SCALE = 99/2;
+    const static int16_t ADC_PHASE1_OFFSET = 33548;
+    const static int16_t ADC_PHASE2_OFFSET = 33587;
+
+    // constants for Isaac's power board
+    // const uint16_t ADC_PHASE1_SCALE = 315;
+    // const uint16_t ADC_PHASE2_SCALE = 315;
+    // const int16_t ADC_PHASE1_OFFSET = 33494;
+    // const int16_t ADC_PHASE2_OFFSET = 33572;
+
+    // ADC settings for the battery current
+    const static uint16_t BATTERY_CURRENT_OFFSET = 52050;
+    constexpr static float BATTERY_CURRENT_SCALE  = 1.05;
+
+    const static uint16_t BATTERY_VOLTAGE_OFFSET = 35160;
+    const static uint16_t BATTERY_ADC_MAX        = 61848;
+    const static uint16_t BATTERY_ADC_MIN        = 35168;
+    constexpr static float BATTERY_MAX           = 69.5;
+
+
     /// pointer to a settings struct
     TMC4671Settings_t *Settings;
 

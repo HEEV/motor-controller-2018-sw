@@ -13,9 +13,6 @@ using uint32_t = std::uint32_t;
 extern SPI_HandleTypeDef *TMC4671_SPI;
 
 // define some helper functions (implemented after the class function implementations)
-static void hall_effect_init(const TMC4671Settings_t &motor_settings);
-static void adc_init();
-static void pwm_init();
 
 
 // define SPI functions for the trinamic API (implementation near the bottom of file)
@@ -185,17 +182,41 @@ float TMC4671Interface::get_motor_current()
 
 float TMC4671Interface::get_battery_current()
 {
-  return 0.0;
+  // select which adc register to read
+  const int AGPI_1_VM = 1;
+  //setup to read the ADC value
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_ADC_RAW_ADDR, AGPI_1_VM);
+  uint16_t value = tmc4671_readRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_ADC_RAW_DATA, BIT_16_TO_31);
+
+  //return static_cast<float>(value) * static_cast<float>(BATTERY_CURRENT_SCALE) - BATTERY_CURRENT_OFFSET;
+  auto current_ma = static_cast<float>(value - BATTERY_CURRENT_OFFSET) * BATTERY_CURRENT_SCALE;
+  return current_ma/1000.0;
 }
 
 float TMC4671Interface::get_battery_voltage()
 {
-  return 0.0;
+
+  // select which adc register to read
+  const int AGPI_1_VM = 1;
+  //setup to read the ADC value
+  tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_ADC_RAW_ADDR, AGPI_1_VM);
+  uint16_t value = tmc4671_readRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_ADC_RAW_DATA, BIT_0_TO_15);
+
+  const float fudge = -2.88;
+  return ((value - BATTERY_ADC_MIN) * BATTERY_MAX)/ static_cast<float>(BATTERY_ADC_MAX - BATTERY_ADC_MIN) + fudge;
 }
 
 int32_t TMC4671Interface::get_motor_RPM()
 {
-  return tmc4671_getActualVelocity(TMC_DEFAULT_MOTOR)/MotorConstant;
+  if(Settings->MotorType == MotorType_t::BLDC_MOTOR)
+  {
+    return tmc4671_getActualVelocity(TMC_DEFAULT_MOTOR)/MotorConstant;
+  }
+  else
+  {
+    return 0;
+  }
+  
 }
 
 // -------------------------------- Helper functions -------------------------
@@ -206,7 +227,7 @@ int32_t TMC4671Interface::get_motor_RPM()
  * mechanical offsets are dependent on the motor used, and therefore need to
  * be easily modifiable by the end user. 
  */
-static void hall_effect_init(const TMC4671Settings_t &motor_settings)
+void TMC4671Interface::hall_effect_init(const TMC4671Settings_t &motor_settings)
 {
   // stuff to setup hall effect sensors here (default config good for now)
   const uint32_t HALL_POSITION[] = {0x55557FFF, 0x00012AAB, 0xAAADD557};
@@ -231,13 +252,8 @@ static void hall_effect_init(const TMC4671Settings_t &motor_settings)
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_HALL_DPHI_MAX, MAX_INTERPOLATION);
 }
 
-static void adc_init() 
+void TMC4671Interface::adc_init() 
 {
-  // constants for Isaac's power board
-  // const uint16_t ADC_PHASE1_SCALE = 315;
-  // const uint16_t ADC_PHASE2_SCALE = 315;
-  // const int16_t ADC_PHASE1_OFFSET = 33494;
-  // const int16_t ADC_PHASE2_OFFSET = 33572;
   // const uint8_t ADC_I0_SELECT = 0;
   // const uint8_t ADC_I1_SELECT = 1;
   // const uint8_t ADC_I_UX_SELECT = 0;
@@ -245,10 +261,6 @@ static void adc_init()
   // const uint8_t ADC_I_WY_SELECT = 2;
 
   // constants for Trinamic's power board
-  const uint16_t ADC_PHASE1_SCALE = 105/2;
-  const uint16_t ADC_PHASE2_SCALE = 99/2;
-  const int16_t ADC_PHASE1_OFFSET = 33548;
-  const int16_t ADC_PHASE2_OFFSET = 33587;
   const uint8_t ADC_I0_SELECT = 0;
   const uint8_t ADC_I1_SELECT = 1;
   const uint8_t ADC_I_UX_SELECT = 0;
@@ -273,7 +285,7 @@ static void adc_init()
   tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_ADC_I1_SCALE_OFFSET, BIT_16_TO_31, ADC_PHASE2_SCALE);
 }
 
-static void pwm_init() 
+void TMC4671Interface::pwm_init() 
 {
 
   //set the PWM polarities to be 1-on, 0-off
