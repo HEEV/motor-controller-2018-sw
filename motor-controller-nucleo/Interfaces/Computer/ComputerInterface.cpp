@@ -111,18 +111,20 @@ void ComputerInterface::display_can_ids(char* buff)
 
   sprintf(buff, 
           "Recieving ID's\n\r"
-          "Direction ID:    %-5u (0x%03X)\n\r"
-          "Control Mode ID: %-5u (0x%03X)",
+          "Direction:        %-5u (0x%03X)\n\r"
+          "Control Mode:     %-5u (0x%03X)",
           base_id+6, base_id+6,
           base_id+7, base_id+7);
   println(buff);
 
   sprintf(buff,
-          "Max Current ID:  %-5u (0x%03X)\n\r"
-          "Max RPM ID:      %-5u (0x%03X)\n\r"
-          "Max Accel ID:    %-5u (0x%03X)\n\r",
+          "Max Current (mA): %-5u (0x%03X)\n\r"
+          "Max RPM:          %-5u (0x%03X)\n\r"
+          "Max Acceleration: %-5u (0x%03X)\n\r"
+          "Enable Motor:     %-5u (0x%03X)\n\r",
           base_id+8, base_id+8,
           base_id+9, base_id+9,
-          base_id+10, base_id+10);
+          base_id+10, base_id+10,
+          base_id+11, base_id+11);
   println(buff);
 }
