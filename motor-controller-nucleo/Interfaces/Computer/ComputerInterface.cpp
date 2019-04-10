@@ -76,7 +76,7 @@ void ComputerInterface::println(char *buff)
 {
   strcat(buff, "\n\r");
   CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
-  HAL_Delay(2);
+  HAL_Delay(1);
 }
 
 const char* ComputerInterface::access_setting_value(char *buff, MotorControllerParameter_t param, bool write, std::int32_t value)
@@ -86,4 +86,48 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
     hsettings_manager->write_setting(param, value);
   }
   return hsettings_manager->get_setting_as_string(buff, param);
+}
+
+void ComputerInterface::display_can_ids(char* buff)
+{
+  //get the base can id
+  auto base_id = Settings->General.ControllerCanId;
+  sprintf(buff, 
+          "Base ID: %-5u (0x%03X)\n\r"
+          "Transmitting ID's",
+          base_id, base_id);
+  println(buff);
+
+  sprintf(buff, 
+          "Temperature:            %-5u (0x%03X)\n\r"
+          "Motor Current (Amps):   %-5u (0x%03X)",
+          base_id+1, base_id+1,
+          base_id+2, base_id+2);
+  println(buff);
+
+  sprintf(buff, 
+          "Motor RPM:              %-5u (0x%03X)\n\r"
+          "Battery Current (Amps): %-5u (0x%03X)\n\r"
+          "Battery Voltage:        %-5u (0x%03X)\n\r",
+          base_id+3, base_id+3,
+          base_id+4, base_id+4,
+          base_id+5, base_id+5);
+  println(buff);
+
+  sprintf(buff, 
+          "Recieving ID's\n\r"
+          "Direction ID:    %-5u (0x%03X)\n\r"
+          "Control Mode ID: %-5u (0x%03X)\n\r",
+          base_id+6, base_id+6,
+          base_id+7, base_id+7);
+  println(buff);
+
+  sprintf(buff,
+          "Max Current ID:  %-5u (0x%03X)\n\r"
+          "Max RPM ID:      %-5u (0x%03X)\n\r"
+          "Max Accel ID:    %-5u (0x%03X)\n\r",
+          base_id+8, base_id+8,
+          base_id+9, base_id+9,
+          base_id+10, base_id+10);
+  println(buff);
 }

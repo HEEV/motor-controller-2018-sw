@@ -203,6 +203,10 @@ void ComputerMenu::display_leaf_item(const MenuItem& menu, menu_cmd_t command, c
   if(menu.param == MotorControllerParameter_t::LIVE_VALUES){
     display_common_settings(buff);
   }
+  else if(menu.param == MotorControllerParameter_t::CONTROLLER_CAN_ID)
+  {
+    compInterface->display_can_ids(buff);
+  }
   else
   {
     compInterface->access_setting_value(buff, menu.param, write_setting, write_value);

@@ -65,6 +65,7 @@ public:
     void println(char* buff);
 
     const char* access_setting_value(char* buff, MotorControllerParameter_t param, bool write, std::int32_t value);
+    void display_can_ids(char* buff);
 
     // disallow default initilization and copying
     ComputerInterface() = delete;
