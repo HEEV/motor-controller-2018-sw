@@ -85,13 +85,13 @@ public:
     /**
      * 
      */
-    float getMotorCurrent();
+    float get_motor_current();
 
-    float getBatteryCurrent();
+    float get_battery_current();
 
-    float getBatteryVoltage();
+    float get_battery_voltage();
 
-    std::int32_t getMotorRPM();
+    std::int32_t get_motor_RPM();
 
     // disallow default initilization and copying
     TMC4671Interface() = delete;

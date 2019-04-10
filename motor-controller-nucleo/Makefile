@@ -43,6 +43,7 @@ Core/Main/CanCallbacks.cpp \
 Core/Main/Actions.cpp \
 Interfaces/Hardware/TMC4671Interface.cpp \
 Interfaces/Hardware/SettingsManager.cpp \
+Interfaces/Hardware/access_settings.cpp \
 Interfaces/Computer/ComputerInterface.cpp \
 Interfaces/Computer/CommandParser.cpp \
 Interfaces/Computer/ComputerMenu.cpp \

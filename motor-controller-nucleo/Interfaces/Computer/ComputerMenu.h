@@ -40,6 +40,9 @@ private:
   // print the menu title and the secondary string for the menu
   void display_menu_heading(const MenuItem &item, char* buff);
 
+  // print some common settings live
+  void display_common_settings(char* buff);
+
   // list sub-menu items
   void list_menu_items(const MenuItem &item, char *buff);
 
@@ -47,7 +50,7 @@ private:
   void display_leaf_item(const MenuItem &item, menu_cmd_t command, char *buff);
 
   MenuItem main_menu;
-  std::array<MenuItem, 4> main_menu_items;
+  std::array<MenuItem, 5> main_menu_items;
 
   // sub menus
   std::array<MenuItem, 4> limits_menu_items;

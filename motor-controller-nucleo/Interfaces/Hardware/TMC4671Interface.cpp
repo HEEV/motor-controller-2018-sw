@@ -139,7 +139,8 @@ void TMC4671Interface::set_setpoint(uint32_t set_point)
     {
       set_point = (set_point > INT32_MAX) ? INT32_MAX : set_point;
       Setpoint = (Direction == MotorDirection_t::REVERSE) ? -set_point : set_point;
-      // Note: this could be very dumb
+
+      // Note: this could be very dumb (or it could be briliant)
       int32_t tmc_setpoint = MotorConstant * Setpoint;
       tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_VELOCITY_TARGET, tmc_setpoint);
       break;
@@ -147,12 +148,12 @@ void TMC4671Interface::set_setpoint(uint32_t set_point)
 
     case ControlMode_t::TORQUE :
     {
-      // divide by 2 to get into 2mA incriments
-      set_point = set_point / 2;  
       // make sure we don't overflow
-      set_point = (set_point > INT16_MAX) ? INT16_MAX : set_point;
+      set_point = (set_point >= (INT16_MAX-1)*2) ? (INT16_MAX-1)*2 : set_point;
       Setpoint = (Direction == MotorDirection_t::REVERSE) ? -set_point : set_point;
-      int16_t tmc_setpoint = Setpoint;
+
+      // divide by 2 to get into 2mA incriments
+      int16_t tmc_setpoint = Setpoint/2;
       tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_PID_TORQUE_FLUX_TARGET, BIT_16_TO_31, tmc_setpoint);
       break;
     }
@@ -171,6 +172,30 @@ void TMC4671Interface::enable()
 // documented in the .h file
 void TMC4671Interface::disable(){
   HAL_GPIO_WritePin(TMC4671_EN_GPIO_Port, TMC4671_EN_Pin, GPIO_PIN_RESET);
+}
+
+float TMC4671Interface::get_motor_current()
+{
+  // get the raw current values (2mA incriments) 
+  int32 raw_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
+
+  // rescale to get the current into mA
+  return static_cast<float>(raw_current) * 2.0;
+}
+
+float TMC4671Interface::get_battery_current()
+{
+  return 0.0;
+}
+
+float TMC4671Interface::get_battery_voltage()
+{
+  return 0.0;
+}
+
+int32_t TMC4671Interface::get_motor_RPM()
+{
+  return tmc4671_getActualVelocity(TMC_DEFAULT_MOTOR)/MotorConstant;
 }
 
 // -------------------------------- Helper functions -------------------------
@@ -287,31 +312,6 @@ static void pwm_init()
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PWM_SV_CHOP, temp_reg);
 }
 
-
-
-float TMC4671Interface::getMotorCurrent()
-{
-  // get the raw current values (2mA incriments) 
-  int32 raw_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
-
-  // rescale to get the current into mA
-  return static_cast<float>(raw_current) * 2.0;
-}
-
-float TMC4671Interface::getBatteryCurrent()
-{
-  return 0.0;
-}
-
-float TMC4671Interface::getBatteryVoltage()
-{
-  return 0.0;
-}
-
-int32_t TMC4671Interface::getMotorRPM()
-{
-  return tmc4671_getActualVelocity(TMC_DEFAULT_MOTOR)/MotorConstant;
-}
 
 // --------------------- Trinamic Library Helper function -------------------------
 

@@ -14,7 +14,6 @@
 #include "usbd_cdc_if.h"
 
 #include <cstring>
-#include <cmath>
 
 #include <helpers/API_Header.h>
 #include <ic/TMC4671/TMC4671.h>
@@ -64,7 +63,6 @@ CanNode* hbatt_voltage_node;
 SettingsManager* hsettings_manager;
 
 /* Private function prototypes -----------------------------------------------*/
-int16_t thermistorTemperature(uint16_t adcVal);
 
 enum class can_group_t : uint8_t {
   TEMPERATURE,
@@ -158,6 +156,7 @@ int main(void)
   int8_t  ms_cnt25 = 0;
   int8_t  ms_cnt50 = 0;
   int16_t ms_cnt200 = 0;
+  int16_t ms_cnt300 = 0;
 
   //enum for simple state machine
   can_group_t group = can_group_t::TEMPERATURE;
@@ -179,6 +178,7 @@ int main(void)
     ms_cnt25 += time_diff;
     ms_cnt50 += time_diff;
     ms_cnt200 += time_diff;
+    ms_cnt300 += time_diff;
 
     if (ms_cnt25 >= 25) {
       // clear the watchdog counter
@@ -226,36 +226,19 @@ int main(void)
       ms_cnt50 = 0;
     }
     if (ms_cnt200 >= 200) {
-      comp_interface.display_settings();
 
       HAL_GPIO_TogglePin(Heartbeat_GPIO_Port, Heartbeat_Pin);
 
       //reset count
       ms_cnt200 = 0;
     }
+    if (ms_cnt300 >= 300) {
+      comp_interface.display_settings();
+
+      //reset count
+      ms_cnt300 = 0;
+    }
   }
-}
-
-
-int16_t thermistorTemperature(uint16_t adcVal)
-{
-  const float THERMISTOR_NOMINAL = 10000.0; // 10K
-  const float BCOEFFICIENT = 3950; // a number picked out of thin air
-  const auto TEMPERATURE_NOMINAL = 25;
-
-  float resistance  = (4096 / static_cast<float>(adcVal)) - 1;
-  resistance = THERMISTOR_NOMINAL / resistance;
-
-  float steinhart;
-  steinhart = resistance / THERMISTOR_NOMINAL;     // (R/Ro)
-  steinhart = log(steinhart);                  // ln(R/Ro)
-  steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
-  steinhart += 1.0 / (TEMPERATURE_NOMINAL + 273.15); // + (1/To)
-  steinhart = 1.0 / steinhart;                 // Invert
-  steinhart -= 273.15;                         // convert to C
-
-  int16_t tempurature = steinhart * 100;
-  return tempurature;
 }
 
 void can_send_data(can_group_t group){
@@ -264,10 +247,7 @@ void can_send_data(can_group_t group){
     case can_group_t::TEMPERATURE:
     {
       int16_t temperatures[] = 
-      { 
-        thermistorTemperature(MotorTemp_ADCVal),
-        thermistorTemperature(TransistorTemp_ADCVal)
-      };
+      { get_motor_temperature(), get_transistor_temperature() };
 
       htemperature_node->sendDataArr_int16(temperatures, 2);
       break;
@@ -277,8 +257,8 @@ void can_send_data(can_group_t group){
     case can_group_t::MOTOR_CURRENT_RPM:
     {
       // get the values from the tmc4671
-      int32_t rpm     = htmc4671->getMotorRPM();
-      float   current = htmc4671->getMotorCurrent();
+      int32_t rpm     = htmc4671->get_motor_RPM();
+      float   current = htmc4671->get_motor_current();
       
       hmc_rpm_node->sendData_int32(rpm);
       hmc_current_node->sendData_float(current/1000);
@@ -288,8 +268,8 @@ void can_send_data(can_group_t group){
     case can_group_t::BATTERY_CURRENT_VOLTAGE:
     {
       // get the values from the tmc4671
-      float voltage = htmc4671->getMotorRPM();
-      float current = htmc4671->getMotorCurrent();
+      float voltage = htmc4671->get_battery_voltage();
+      float current = htmc4671->get_battery_current();
 
       hbatt_voltage_node->sendData_float(voltage/1000);
       hbatt_current_node->sendData_float(current/1000);

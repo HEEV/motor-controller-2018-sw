@@ -80,7 +80,7 @@ void ComputerInterface::println(char *buff)
 {
   strcat(buff, "\n\r");
   CDC_Transmit_FS((uint8_t*) buff, strlen(buff)+1);
-  HAL_Delay(1);
+  HAL_Delay(2);
 }
 
 const char* ComputerInterface::access_setting_value(char *buff, MotorControllerParameter_t param, bool write, std::int32_t value)
@@ -408,8 +408,9 @@ const char* ComputerInterface::access_setting_value(char *buff, MotorControllerP
       // call the hall auto setup function
     }
     return "";
-    break;
 
+  case MotorParams::LIVE_VALUES:
+    return "";
 
   // unknown parameter, return early
   default:

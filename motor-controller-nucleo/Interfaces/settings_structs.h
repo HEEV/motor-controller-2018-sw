@@ -101,6 +101,11 @@ enum class MotorControllerParameter_t : std::uint8_t {
     ANALOG_SETUP,
     HALL_AUTO_SETUP,
     SAVE_SETTINGS,
+    CURRENT,
+    VELOCITY,
+    MOTOR_TEMPERATURE,
+    TRANSISTOR_TEMPERATURE,
+    LIVE_VALUES,
     NO_ACTION
 };
 

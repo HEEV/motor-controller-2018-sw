@@ -4,12 +4,14 @@
 #include <functional>
 #include "settings_structs.h"
 #include "ComputerInterface.h"
+#include "access_settings.h"
 
 extern "C" {
   #include "tiny_printf.h"
 }
 
 #define my_sprintf sprintf
+
 
 // constructor in ComputerMenu_init.cpp
 
@@ -98,12 +100,12 @@ const char* ComputerMenu::get_menu_item_str(const MenuItem &item, int item_num, 
     
     strcat(name_buff, ":");
 
-    my_sprintf(buff, "%d) %-25s\t%s\n\r", item_num, name_buff, menu_val);
+    my_sprintf(buff, "%d) %-25s\t%s", item_num, name_buff, menu_val);
   }
   else
   {
     strcat(name_buff, "->");
-    my_sprintf(buff, "%d) %-25s\n\r", item_num, name_buff);
+    my_sprintf(buff, "%d) %-25s", item_num, name_buff);
   }
   
   return buff;
@@ -137,7 +139,6 @@ void ComputerMenu::display_menu_heading(const MenuItem& menu, char *buff)
     return buff;
   };
 
-  
   compInterface->println(get_menu_name(menu, buff));
   compInterface->println(hline(buff));
 
@@ -155,26 +156,36 @@ void ComputerMenu::display_menu_heading(const MenuItem& menu, char *buff)
 
     compInterface->println(buff);
   }
-  strcpy(buff, "\n\rUse the ESC or \'u\' key to go up");
+  strcpy(buff, "Use the ESC or \'u\' key to go up");
   compInterface->println(buff);
   compInterface->println(hline(buff));
 }
 
-void ComputerMenu::list_menu_items(const MenuItem& menu, char *buff) {
-  auto print = [](const char* buff) {
-    CDC_Transmit_FS((uint8_t *) buff, strlen(buff)+1);
-    HAL_Delay(1);
-  };
+void ComputerMenu::display_common_settings(char* buff)
+{
+  char buff1[10];
+  char buff2[10];
+  char buff3[10];
+  my_sprintf(buff, "Setpoint: %-15s Velocity: %-15s Current: %-15s", 
+    get_setting_as_string(buff1, MotorControllerParameter_t::SETPOINT),
+    get_setting_as_string(buff2, MotorControllerParameter_t::VELOCITY),
+    get_setting_as_string(buff3, MotorControllerParameter_t::CURRENT));
+  compInterface->println(buff);
 
+  my_sprintf(buff, "Motor Temperature: %-15s Transistor Temperature: %-15s", 
+    get_setting_as_string(buff1, MotorControllerParameter_t::MOTOR_TEMPERATURE),
+    get_setting_as_string(buff2, MotorControllerParameter_t::TRANSISTOR_TEMPERATURE));
+  compInterface->println(buff);
+}
+
+void ComputerMenu::list_menu_items(const MenuItem& menu, char *buff) {
   display_menu_heading(menu, buff);
 
   for(int i = 0; i < menu.sub_menu_items; i++)
   {
     get_menu_item_str(menu.sub_menu[i], i, buff);
-    print(buff);
+    compInterface->println(buff);
   }
-  strcpy(buff, "\n\r");
-  print(buff);
 }
 
 void ComputerMenu::display_leaf_item(const MenuItem& menu, menu_cmd_t command, char *buff)
@@ -188,7 +199,14 @@ void ComputerMenu::display_leaf_item(const MenuItem& menu, menu_cmd_t command, c
     write_setting = true;
     write_value = command.data;
   }
-  
-  strcpy(buff, compInterface->access_setting_value(buff, menu.param, write_setting, write_value));
-  compInterface->println(buff);
+
+  // special case for live values item 
+  if(menu.param == MotorControllerParameter_t::LIVE_VALUES){
+    display_common_settings(buff);
+  }
+  else
+  {
+    strcpy(buff, compInterface->access_setting_value(buff, menu.param, write_setting, write_value));
+    compInterface->println(buff);
+  }
 }
