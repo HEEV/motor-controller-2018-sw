@@ -52,6 +52,7 @@ void SettingsManager::write_setting(MotorControllerParameter_t param, int32_t va
   case MotorParams::ACCELERATION_LIMIT :
     tmc4671.AccelerationLimit = (std::uint32_t) value; 
     htmc4671->change_settings(&tmc4671);
+    break;
 
   // Motor type tmc4671
   case MotorParams::MOTOR_TYPE:

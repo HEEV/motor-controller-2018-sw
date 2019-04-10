@@ -163,6 +163,20 @@ const char* SettingsManager::get_setting_as_string(char* buff, MotorControllerPa
     return buff;
   }
 
+  case MotorParams::BATTERY_CURRENT:
+  {
+    auto batt_current = htmc4671->get_battery_current();
+    my_sprintf(buff, "%6.3f A", batt_current);
+    return buff;
+  }
+
+  case MotorParams::BATTERY_VOLTAGE:
+  {
+    auto batt_voltage = htmc4671->get_battery_voltage();
+    my_sprintf(buff, "%4.2f V", batt_voltage);
+    return buff;
+  }
+
   case MotorParams::MOTOR_TEMPERATURE:
   {
     float motor_temp = get_motor_temperature();
