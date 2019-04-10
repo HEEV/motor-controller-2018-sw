@@ -180,6 +180,8 @@ float TMC4671Interface::get_motor_current()
   return static_cast<float>(raw_current) * 2.0;
 }
 
+// Deal with the error in the 4671 datasheet 
+// (0-2v input instead of a 0-5v input)
 float TMC4671Interface::get_battery_current()
 {
   // select which adc register to read
@@ -193,6 +195,8 @@ float TMC4671Interface::get_battery_current()
   return current_ma/1000.0;
 }
 
+// Deal with the error in the 4671 datasheet 
+// (0-2v input instead of a 0-5v input)
 float TMC4671Interface::get_battery_voltage()
 {
 
@@ -208,15 +212,7 @@ float TMC4671Interface::get_battery_voltage()
 
 int32_t TMC4671Interface::get_motor_RPM()
 {
-  if(Settings->MotorType == MotorType_t::BLDC_MOTOR)
-  {
-    return tmc4671_getActualVelocity(TMC_DEFAULT_MOTOR)/MotorConstant;
-  }
-  else
-  {
-    return 0;
-  }
-  
+  return tmc4671_getActualVelocity(TMC_DEFAULT_MOTOR)/MotorConstant;
 }
 
 // -------------------------------- Helper functions -------------------------

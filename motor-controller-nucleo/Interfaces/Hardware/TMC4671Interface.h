@@ -117,6 +117,9 @@ private:
     // const int16_t ADC_PHASE1_OFFSET = 33494;
     // const int16_t ADC_PHASE2_OFFSET = 33572;
 
+    // Deal with the error in the 4671 datasheet 
+    // (0-2v input instead of a 0-5v input)
+
     // ADC settings for the battery current
     const static uint16_t BATTERY_CURRENT_OFFSET = 52050;
     constexpr static float BATTERY_CURRENT_SCALE  = 1.05;
