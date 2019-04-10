@@ -171,6 +171,11 @@ void ComputerMenu::display_common_settings(char* buff)
     compInterface->access_setting_value(buff3, MotorControllerParameter_t::CURRENT, false, 0));
   compInterface->println(buff);
 
+  my_sprintf(buff, "Battery Voltage: %-15s Battery Current: %-15s", 
+    compInterface->access_setting_value(buff1, MotorControllerParameter_t::BATTERY_VOLTAGE, false, 0),
+    compInterface->access_setting_value(buff2, MotorControllerParameter_t::BATTERY_CURRENT, false, 0));
+  compInterface->println(buff);
+
   my_sprintf(buff, "Motor Temperature: %-15s Transistor Temperature: %-15s", 
     compInterface->access_setting_value(buff1, MotorControllerParameter_t::MOTOR_TEMPERATURE, false, 0),
     compInterface->access_setting_value(buff2, MotorControllerParameter_t::TRANSISTOR_TEMPERATURE, false, 0));
