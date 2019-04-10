@@ -93,12 +93,7 @@ void ComputerInterface::display_can_ids(char* buff)
   //get the base can id
   auto base_id = Settings->General.ControllerCanId;
   sprintf(buff, 
-          "Base ID: %-5u (0x%03X)\n\r"
-          "Transmitting ID's",
-          base_id, base_id);
-  println(buff);
-
-  sprintf(buff, 
+          "Transmitting ID's\n\r"
           "Temperature:            %-5u (0x%03X)\n\r"
           "Motor Current (Amps):   %-5u (0x%03X)",
           base_id+1, base_id+1,
@@ -117,7 +112,7 @@ void ComputerInterface::display_can_ids(char* buff)
   sprintf(buff, 
           "Recieving ID's\n\r"
           "Direction ID:    %-5u (0x%03X)\n\r"
-          "Control Mode ID: %-5u (0x%03X)\n\r",
+          "Control Mode ID: %-5u (0x%03X)",
           base_id+6, base_id+6,
           base_id+7, base_id+7);
   println(buff);

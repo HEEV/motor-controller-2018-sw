@@ -205,6 +205,10 @@ void ComputerMenu::display_leaf_item(const MenuItem& menu, menu_cmd_t command, c
   }
   else if(menu.param == MotorControllerParameter_t::CONTROLLER_CAN_ID)
   {
+    char base_id_buff[10];
+    compInterface->access_setting_value(base_id_buff, menu.param, write_setting, write_value);
+    my_sprintf(buff, "Base ID: %s", base_id_buff);
+    compInterface->println(buff);
     compInterface->display_can_ids(buff);
   }
   else
