@@ -34,7 +34,7 @@ const char* SettingsManager::get_setting_as_string(char* buff, MotorControllerPa
     auto units = [](ControlMode_t cm) {
       return (cm == ControlMode_t::TORQUE) ? "mA" : "RPM";
     };
-    my_sprintf(buff, "%5lu %s", tmc4671.Setpoint, units(tmc4671.ControlMode));
+    my_sprintf(buff, "%5ld %s", tmc4671.Setpoint, units(tmc4671.ControlMode));
     return buff; 
   }
 
