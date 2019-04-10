@@ -17,9 +17,9 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
                           mc_param::SAVE_SETTINGS, nullptr, &main_menu, 0};
 
   // make references to the main menu items (to the sub menus)
-  const auto limits_menu  = &main_menu_items[0];
-  const auto general_menu = &main_menu_items[1];
-  const auto motor_menu   = &main_menu_items[2];
+  const auto limits_menu  = &main_menu_items[1];
+  const auto general_menu = &main_menu_items[2];
+  const auto motor_menu   = &main_menu_items[3];
 
   // setup the limits menu
   limits_menu_items[0] = MenuItem{"Up", "", default_param, &main_menu, &main_menu, 1};
