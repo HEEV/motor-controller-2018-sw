@@ -2,6 +2,21 @@
 #define SETTINGS_MANAGER_H
 
 #include <settings_structs.h>
+#include <TMC4671Interface.h>
+#include <cstdio>
+#include <Actions.h>
+
+#ifdef __cplusplus
+extern "C" {
+  #include "tiny_printf.h"
+}
+#else
+  #include "tiny_printf.h"
+#endif
+
+#define my_sprintf sprintf
+
+extern TMC4671Interface* htmc4671;
 
 class SettingsManager
 {
@@ -18,6 +33,9 @@ public:
 
   SettingsManager(MotorControllerValues_t* values);
   void save_settings();
+
+  void write_setting(MotorControllerParameter_t param, std::int32_t value);
+  const char* get_setting_as_string(char* buff, MotorControllerParameter_t param);
 
   ~SettingsManager() = default;
 

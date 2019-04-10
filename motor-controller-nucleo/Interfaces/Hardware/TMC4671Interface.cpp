@@ -96,12 +96,12 @@ void TMC4671Interface::set_control_mode(ControlMode_t mode)
 {
   uint8_t tmc_mode = TMC4671_MOTION_MODE_VELOCITY; 
   switch (mode) {
-    default:
     case ControlMode_t::VELOCITY :
       // this statement is redundant
       tmc_mode = TMC4671_MOTION_MODE_VELOCITY;
     break; 
 
+    default:
     case ControlMode_t::TORQUE :
       tmc_mode = TMC4671_MOTION_MODE_TORQUE; 
     break;

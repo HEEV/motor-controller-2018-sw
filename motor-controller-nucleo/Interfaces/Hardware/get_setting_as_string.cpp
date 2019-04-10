@@ -1,28 +1,12 @@
-#include "access_settings.h"
-#include <TMC4671Interface.h>
-#include <cstdio>
-#include <Actions.h>
+#include "SettingsManager.h"
 
-#ifdef __cplusplus
-extern "C" {
-  #include "tiny_printf.h"
-}
-#else
-  #include "tiny_printf.h"
-#endif
-
-#define my_sprintf sprintf
-
-extern MotorControllerValues_t* hmc_settings;
-extern TMC4671Interface* htmc4671;
-
-const char* get_setting_as_string(char* buff, MotorControllerParameter_t param)
+const char* SettingsManager::get_setting_as_string(char* buff, MotorControllerParameter_t param)
 {
   // so I don't have to type MotorControllerParameter_t every time
   using MotorParams = MotorControllerParameter_t;
 
-  auto& tmc4671 = hmc_settings->tmc4671;
-  auto& gen_settings = hmc_settings->General;
+  auto& tmc4671 = user_settings->tmc4671;
+  auto& gen_settings = user_settings->General;
 
   // make a lambda function to convert a bit slice into a string
   auto bit2Str = [](uint8_t bit) { return bit ? "On" : "Off";};

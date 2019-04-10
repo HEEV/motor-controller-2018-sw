@@ -4,7 +4,6 @@
 #include <functional>
 #include "settings_structs.h"
 #include "ComputerInterface.h"
-#include "access_settings.h"
 
 extern "C" {
   #include "tiny_printf.h"
@@ -167,14 +166,14 @@ void ComputerMenu::display_common_settings(char* buff)
   char buff2[10];
   char buff3[10];
   my_sprintf(buff, "Setpoint: %-15s Velocity: %-15s Current: %-15s", 
-    get_setting_as_string(buff1, MotorControllerParameter_t::SETPOINT),
-    get_setting_as_string(buff2, MotorControllerParameter_t::VELOCITY),
-    get_setting_as_string(buff3, MotorControllerParameter_t::CURRENT));
+    compInterface->access_setting_value(buff1, MotorControllerParameter_t::SETPOINT, false, 0),
+    compInterface->access_setting_value(buff2, MotorControllerParameter_t::VELOCITY, false, 0),
+    compInterface->access_setting_value(buff3, MotorControllerParameter_t::CURRENT, false, 0));
   compInterface->println(buff);
 
   my_sprintf(buff, "Motor Temperature: %-15s Transistor Temperature: %-15s", 
-    get_setting_as_string(buff1, MotorControllerParameter_t::MOTOR_TEMPERATURE),
-    get_setting_as_string(buff2, MotorControllerParameter_t::TRANSISTOR_TEMPERATURE));
+    compInterface->access_setting_value(buff1, MotorControllerParameter_t::MOTOR_TEMPERATURE, false, 0),
+    compInterface->access_setting_value(buff2, MotorControllerParameter_t::TRANSISTOR_TEMPERATURE, false, 0));
   compInterface->println(buff);
 }
 
@@ -206,7 +205,7 @@ void ComputerMenu::display_leaf_item(const MenuItem& menu, menu_cmd_t command, c
   }
   else
   {
-    strcpy(buff, compInterface->access_setting_value(buff, menu.param, write_setting, write_value));
+    compInterface->access_setting_value(buff, menu.param, write_setting, write_value);
     compInterface->println(buff);
   }
 }

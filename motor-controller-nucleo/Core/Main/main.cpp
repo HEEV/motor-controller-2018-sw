@@ -59,9 +59,6 @@ CanNode* hmc_current_node;
 CanNode* hmc_rpm_node;
 CanNode* hbatt_current_node;
 CanNode* hbatt_voltage_node;
-
-SettingsManager* hsettings_manager;
-
 /* Private function prototypes -----------------------------------------------*/
 
 enum class can_group_t : uint8_t {
@@ -87,8 +84,7 @@ int main(void)
   motor_controller_init();
 
   // load settings from flash
-  SettingsManager sm(hmc_settings);
-  hsettings_manager = &sm;
+  SettingsManager settings_manager(hmc_settings);
 
   // intilize CAN variables
   auto base_id = mc_settings.General.ControllerCanId;
@@ -137,7 +133,7 @@ int main(void)
   TMC4671Interface  tmc4671(&mc_settings.tmc4671);
   htmc4671 = &tmc4671;
 
-  ComputerInterface comp_interface(&mc_settings, &tmc4671);
+  ComputerInterface comp_interface(&mc_settings, &tmc4671, &settings_manager);
 
   // initilize pointer for the USB interface
   hcomp_iface = &comp_interface;

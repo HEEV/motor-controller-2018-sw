@@ -38,6 +38,7 @@ void computerInterface_update_buffer(void* comp_iface, const uint8_t *buff, uint
 #include <array>
 #include "ComputerMenu.h"
 #include "CommandParser.h"
+#include "SettingsManager.h"
 
 #ifndef PC_INTERFACE
 #define PC_INTERFACE UART
@@ -51,7 +52,7 @@ enum class MotorControllerParameter_t : std::uint8_t;
 
 class ComputerInterface {
 public:
-    ComputerInterface(MotorControllerValues_t *Settings_, TMC4671Interface *mc_handle);
+    ComputerInterface(MotorControllerValues_t *Settings_, TMC4671Interface *mc_handle, SettingsManager* manager_);
 
     /**
      * This function is meant to be called from the interrupt service routine for
@@ -80,6 +81,7 @@ private:
     CommandParser command_parser;
     ComputerMenu menu;
     TMC4671Interface* htmc4671;
+    SettingsManager* hsettings_manager;
 };
 #endif // __cplusplus
 #endif // SERIAL_INTERFACE_H_
