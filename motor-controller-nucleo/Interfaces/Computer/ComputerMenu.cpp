@@ -18,7 +18,7 @@ extern "C" {
 void ComputerMenu::display_menu(menu_cmd_t command)
 {
   // Make my buffer the same length as the USB buffer (defined in usbd_cdc_if.c)
-  const uint8_t BUFFSIZE = 128; // same length as the USB buffer
+  const uint8_t BUFFSIZE = 255; // same length as the USB buffer
   char buff[BUFFSIZE] = {0};
 
   // clear the page
@@ -213,7 +213,7 @@ void ComputerMenu::display_leaf_item(const MenuItem& menu, menu_cmd_t command, c
   }
   else
   {
-    compInterface->access_setting_value(buff, menu.param, write_setting, write_value);
+    strcpy(buff, compInterface->access_setting_value(buff, menu.param, write_setting, write_value));
     compInterface->println(buff);
   }
 }
