@@ -38,7 +38,7 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
                               mc_param::CONTROLLER_CAN_ID, nullptr, general_menu, 0};
   general_setting_items[4] = MenuItem{"Throttle CAN ID", "Select an ID to listen to for setpoints (requires a restart)",
                               mc_param::THROTTLE_CAN_ID, nullptr, general_menu, 0};
-  general_setting_items[5] = MenuItem{"Use Analog Input", "1 for CAN setpoint, 0 for Throttle input", mc_param::USE_ANALOG, nullptr, general_menu, 0};
+  general_setting_items[5] = MenuItem{"Use Analog Input", "0 for CAN setpoint, 1 for Throttle input", mc_param::USE_ANALOG, nullptr, general_menu, 0};
   general_setting_items[6] = MenuItem{"Throttle Setup", "Put throttle at minimum, enter 1.\n\rThen put throttle at maximum and enter 1", 
                               mc_param::ANALOG_SETUP, nullptr, general_menu, 0};
 
