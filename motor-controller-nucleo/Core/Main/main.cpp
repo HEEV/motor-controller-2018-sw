@@ -185,7 +185,7 @@ int main(void)
       if (CAN_watchdog > MAX_CAN_WATCHDOG && !use_analog)
       {
         // disable TMC4671 outputs
-        tmc4671.disable();
+        //tmc4671.disable();
       }
       ms_cnt25 = 0;
     }

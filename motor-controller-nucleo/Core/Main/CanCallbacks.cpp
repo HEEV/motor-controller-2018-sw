@@ -22,7 +22,7 @@ void rtrHandle(CanMessage* msg) {
 
 void mc_dir_handle(CanMessage* msg)
 {
-  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin | User_LED_Pin);
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   // switch the direction of the motor
   uint8_t data = static_cast<uint8_t>(hmc_settings->tmc4671.MotorDir);
 
@@ -105,7 +105,7 @@ void mc_maxAcc_handle(CanMessage* msg)
 void mc_enable_handle(CanMessage* msg)
 {
   UNUSED(msg);
-  //HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   // reset "watchdog" counter
   CAN_watchdog = 0;
   // re-enable the TMC4671
@@ -114,6 +114,12 @@ void mc_enable_handle(CanMessage* msg)
 
 void mc_throttle_handle(CanMessage* msg)
 {
-  UNUSED(msg);
-  //HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
+  HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
+
+  uint32_t setpoint = 0;
+  if(!hmc_settings->General.bool_settings.useAnalog)
+  {
+    CanNode::getData_uint32(msg, &setpoint);
+    htmc4671->set_setpoint(setpoint);
+  }
 }
