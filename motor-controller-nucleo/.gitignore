@@ -2,6 +2,7 @@
 *.elf
 *.bin
 *.o
+*.ipch
 tags
 doc/*
 wiki/*
