@@ -76,10 +76,9 @@ void motor_controller_init()
   // check if we were reset by the window watchdog
   if(__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
   {
-    // set the user pin high
-    HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
     // clear the reset flags
     __HAL_RCC_CLEAR_RESET_FLAGS();
+    // blink some lights
     Error_Handler();
   }
 
