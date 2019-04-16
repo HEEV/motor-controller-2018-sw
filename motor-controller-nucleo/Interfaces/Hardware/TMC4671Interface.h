@@ -112,8 +112,9 @@ private:
     // const static int16_t ADC_PHASE2_OFFSET = 33587;
 
     // constants for Isaac's power board
-    const static uint16_t ADC_PHASE1_SCALE = 315/2;
-    const static uint16_t ADC_PHASE2_SCALE = 315/2;
+    const static uint16_t CURRENT_DIVISOR = 2;
+    const static uint16_t ADC_PHASE1_SCALE = 315/CURRENT_DIVISOR;
+    const static uint16_t ADC_PHASE2_SCALE = 315/CURRENT_DIVISOR;
     const static int16_t ADC_PHASE1_OFFSET = 33494;
     const static int16_t ADC_PHASE2_OFFSET = 33572;
 

@@ -66,7 +66,7 @@ void TMC4671Interface::change_settings(const TMC4671Settings_t *settings)
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, (motor_type << 16) | (pole_pairs) );
 
   //update the limits (current, velocity, and acceleration)
-  tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_PID_TORQUE_FLUX_LIMITS, BIT_0_TO_15, settings->CurrentLimit);
+  tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_PID_TORQUE_FLUX_LIMITS, BIT_0_TO_15, settings->CurrentLimit/CURRENT_DIVISOR);
 
   // multiply the velocity and acceleration limits times the motor constant to get accurate velocity and acceleration limits
   tmc4671_writeInt(TMC_DEFAULT_MOTOR, TMC4671_PID_VELOCITY_LIMIT, MotorConstant*settings->VelocityLimit);
@@ -146,11 +146,11 @@ void TMC4671Interface::set_setpoint(uint32_t set_point)
     case ControlMode_t::TORQUE :
     {
       // make sure we don't overflow
-      set_point = (set_point >= (INT16_MAX-1)*2) ? (INT16_MAX-1)*2 : set_point;
+      set_point = (set_point >= (INT16_MAX-1)*CURRENT_DIVISOR) ? (INT16_MAX-1)*CURRENT_DIVISOR : set_point;
       Setpoint = (Direction == MotorDirection_t::REVERSE) ? -set_point : set_point;
 
       // divide by 2 to get into 2mA incriments
-      int16_t tmc_setpoint = Setpoint/2;
+      int16_t tmc_setpoint = Setpoint / CURRENT_DIVISOR;
       tmc4671_writeRegister16BitValue(TMC_DEFAULT_MOTOR, TMC4671_PID_TORQUE_FLUX_TARGET, BIT_16_TO_31, tmc_setpoint);
       break;
     }
@@ -177,7 +177,7 @@ float TMC4671Interface::get_motor_current()
   int32 raw_current = tmc4671_getActualTorque_raw(TMC_DEFAULT_MOTOR);
 
   // rescale to get the current into mA
-  return static_cast<float>(raw_current) * 2.0;
+  return static_cast<float>(raw_current) * CURRENT_DIVISOR;
 }
 
 // Deal with the error in the 4671 datasheet 
