@@ -106,16 +106,16 @@ private:
     // constant ADC settings
 
     // constants for the Trinamic Power board
-    const static uint16_t ADC_PHASE1_SCALE = 105/2;
-    const static uint16_t ADC_PHASE2_SCALE = 99/2;
-    const static int16_t ADC_PHASE1_OFFSET = 33548;
-    const static int16_t ADC_PHASE2_OFFSET = 33587;
+    // const static uint16_t ADC_PHASE1_SCALE = 105/2;
+    // const static uint16_t ADC_PHASE2_SCALE = 99/2;
+    // const static int16_t ADC_PHASE1_OFFSET = 33548;
+    // const static int16_t ADC_PHASE2_OFFSET = 33587;
 
     // constants for Isaac's power board
-    // const uint16_t ADC_PHASE1_SCALE = 315;
-    // const uint16_t ADC_PHASE2_SCALE = 315;
-    // const int16_t ADC_PHASE1_OFFSET = 33494;
-    // const int16_t ADC_PHASE2_OFFSET = 33572;
+    const static uint16_t ADC_PHASE1_SCALE = 315/2;
+    const static uint16_t ADC_PHASE2_SCALE = 315/2;
+    const static int16_t ADC_PHASE1_OFFSET = 33494;
+    const static int16_t ADC_PHASE2_OFFSET = 33572;
 
     // Deal with the error in the 4671 datasheet 
     // (0-2v input instead of a 0-5v input)

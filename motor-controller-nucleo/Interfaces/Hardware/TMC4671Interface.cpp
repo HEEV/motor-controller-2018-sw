@@ -250,18 +250,18 @@ void TMC4671Interface::hall_effect_init(const TMC4671Settings_t &motor_settings)
 
 void TMC4671Interface::adc_init() 
 {
-  // const uint8_t ADC_I0_SELECT = 0;
-  // const uint8_t ADC_I1_SELECT = 1;
-  // const uint8_t ADC_I_UX_SELECT = 0;
-  // const uint8_t ADC_I_V_SELECT = 1;
-  // const uint8_t ADC_I_WY_SELECT = 2;
-
-  // constants for Trinamic's power board
   const uint8_t ADC_I0_SELECT = 0;
   const uint8_t ADC_I1_SELECT = 1;
   const uint8_t ADC_I_UX_SELECT = 0;
-  const uint8_t ADC_I_V_SELECT = 2;
-  const uint8_t ADC_I_WY_SELECT = 1;
+  const uint8_t ADC_I_V_SELECT = 1;
+  const uint8_t ADC_I_WY_SELECT = 2;
+
+  // constants for Trinamic's power board
+  // const uint8_t ADC_I0_SELECT = 0;
+  // const uint8_t ADC_I1_SELECT = 1;
+  // const uint8_t ADC_I_UX_SELECT = 0;
+  // const uint8_t ADC_I_V_SELECT = 2;
+  // const uint8_t ADC_I_WY_SELECT = 1;
 
   // setup which registers the ADC reads for each phase current
   const uint32_t adc_selection = 
