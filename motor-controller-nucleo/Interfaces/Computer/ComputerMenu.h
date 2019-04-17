@@ -50,7 +50,7 @@ private:
   void display_leaf_item(const MenuItem &item, menu_cmd_t command, char *buff);
 
   MenuItem main_menu;
-  std::array<MenuItem, 5> main_menu_items;
+  std::array<MenuItem, 6> main_menu_items;
 
   // sub menus
   std::array<MenuItem, 4> limits_menu_items;

@@ -98,13 +98,15 @@ void TMC4671Interface::set_control_mode(ControlMode_t mode)
       tmc_mode = TMC4671_MOTION_MODE_VELOCITY;
     break; 
 
-    default:
     case ControlMode_t::TORQUE :
       tmc_mode = TMC4671_MOTION_MODE_TORQUE; 
     break;
 
     case ControlMode_t::OPEN_LOOP :
       tmc_mode = TMC4671_MOTION_MODE_UQ_UD_EXT; 
+    break;
+
+    default: 
     break;
   }
   // set the class state
@@ -131,7 +133,6 @@ void TMC4671Interface::set_setpoint(uint32_t set_point)
   Settings->Setpoint = Setpoint;
 
   switch (ControlMode) {
-    default:
     case ControlMode_t::VELOCITY :
     {
       set_point = (set_point > INT32_MAX) ? INT32_MAX : set_point;
@@ -156,6 +157,9 @@ void TMC4671Interface::set_setpoint(uint32_t set_point)
     }
 
     case ControlMode_t::OPEN_LOOP :
+    break;
+
+    default:
     break;
   }
 }

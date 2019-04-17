@@ -28,12 +28,12 @@ void SettingsManager::write_setting(MotorControllerParameter_t param, int32_t va
 
   // CAN Settings
   case MotorParams::CONTROLLER_CAN_ID:
-    value = (value > 0x7FF) ? 0x7FF : value;
+    if(value > 0x7FF) break;
     gen_settings.ControllerCanId = (std::uint16_t) value;
     break;
 
   case MotorParams::THROTTLE_CAN_ID:
-    value = (value > 0x7FF) ? 0x7FF : value;
+    if(value > 0x7FF) break;
     gen_settings.ThrottleCanId = (std::uint16_t) value;
     break;
 
@@ -57,9 +57,9 @@ void SettingsManager::write_setting(MotorControllerParameter_t param, int32_t va
   // Motor type tmc4671
   case MotorParams::MOTOR_TYPE:
     switch(value) {
-      default: // fall through
       case 0: tmc4671.MotorType = MotorType_t::BLDC_MOTOR; break;
       case 1: tmc4671.MotorType = MotorType_t::BRUSHED_MOTOR; break;
+      default: break;
     }
     htmc4671->change_settings(&tmc4671);
     break;
@@ -144,6 +144,10 @@ void SettingsManager::write_setting(MotorControllerParameter_t param, int32_t va
   
   case MotorParams::USE_ANALOG :
     gen_settings.bool_settings.useAnalog = static_cast<std::uint8_t>(value == 1); 
+    break;
+
+  case MotorParams::ENABLE_OUTPUTS:
+    gen_settings.bool_settings.enableOutputs = static_cast<std::uint8_t>(value == 1); 
     break;
 
   case MotorParams::ANALOG_SETUP:

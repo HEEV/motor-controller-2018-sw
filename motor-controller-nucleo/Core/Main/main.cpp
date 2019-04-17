@@ -198,6 +198,16 @@ int main(void)
         tmc4671.set_setpoint(setpoint);
       } 
 
+      // check if the output is enabled or not
+      if (mc_settings.General.bool_settings.enableOutputs == 1){
+        HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
+        tmc4671.enable();
+      }
+      else {
+        HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_RESET);
+        tmc4671.disable();
+      }
+
       // send CAN values
       can_send_data(group);
 

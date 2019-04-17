@@ -136,6 +136,9 @@ const char* SettingsManager::get_setting_as_string(char* buff, MotorControllerPa
   case MotorParams::USE_ANALOG :
     return bit2Str( gen_settings.bool_settings.useAnalog );
 
+  case MotorParams::ENABLE_OUTPUTS:
+    return bit2Str( gen_settings.bool_settings.enableOutputs);
+
   case MotorParams::ANALOG_SETUP:
   {
     auto& throttle_range = gen_settings.ThrottleRange;

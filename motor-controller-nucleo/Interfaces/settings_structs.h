@@ -96,8 +96,11 @@ enum class MotorControllerParameter_t : std::uint8_t {
     OPEN_LOOP_MAX_I,                /// Max current in mili-Amps
     OPEN_LOOP_MAX_V,                /// Max voltage in Volts
 
-    // settings that don't correspond to actual settings
+    // stuff that doesn't quite fit anywhere
     USE_ANALOG,
+    ENABLE_OUTPUTS,
+
+    // settings that don't correspond to actual settings
     ANALOG_SETUP,
     HALL_AUTO_SETUP,
     SAVE_SETTINGS,
@@ -121,7 +124,8 @@ struct GeneralSettings_t {
     std::uint16_t ThrottleCanId;
     range_t ThrottleRange;
     struct {
-        std::uint8_t useAnalog : 1;
+        std::uint8_t useAnalog     : 1;
+        std::uint8_t enableOutputs : 1;
     } bool_settings;
 };
 

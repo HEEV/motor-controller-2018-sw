@@ -13,7 +13,9 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
   main_menu_items[1] = MenuItem{"Limits", "", default_param, limits_menu_items.data(), &main_menu, limits_menu_items.size()};
   main_menu_items[2] = MenuItem{"General Settings", "", default_param, general_setting_items.data(), &main_menu, general_setting_items.size()};
   main_menu_items[3] = MenuItem{"Motor Settings", "", default_param, motor_setting_items.data(), &main_menu, motor_setting_items.size()};
-  main_menu_items[4] = MenuItem{"Save Settings", "Save settings to flash\n\r 0 to exit, 1 to save current settings",
+  main_menu_items[4] = MenuItem{"Enable Outputs", "0 to disable motor, 1 to enable motor", 
+                          mc_param::ENABLE_OUTPUTS, nullptr, &main_menu, 0};
+  main_menu_items[5] = MenuItem{"Save Settings", "Save settings to flash\n\r 0 to exit, 1 to save current settings",
                           mc_param::SAVE_SETTINGS, nullptr, &main_menu, 0};
 
   // make references to the main menu items (to the sub menus)
@@ -34,9 +36,11 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
   general_setting_items[0] = MenuItem{"Up", "", default_param, &main_menu, &main_menu, 1};
   general_setting_items[1] = MenuItem{"Motor Control Mode", "0 for Torque, 1 for Velocity", mc_param::MOTOR_MODE, nullptr, general_menu, 0};
   general_setting_items[2] = MenuItem{"Motor Direction", "0 for Forward, 1 for Reverse", mc_param::MOTOR_DIRECTION, nullptr, general_menu, 0};
-  general_setting_items[3] = MenuItem{"Motor Controller CAN ID", "Select a base ID for sending out and recieving data (requires a restart)", 
+  general_setting_items[3] = MenuItem{"Motor Controller CAN ID", "Select a base ID for sending out and recieving data (requires a restart)"
+                                      "\n\r Range: [0, 2047]", 
                               mc_param::CONTROLLER_CAN_ID, nullptr, general_menu, 0};
-  general_setting_items[4] = MenuItem{"Throttle CAN ID", "Select an ID to listen to for setpoints (requires a restart)",
+  general_setting_items[4] = MenuItem{"Throttle CAN ID", "Select an ID to listen to for setpoints (requires a restart)"
+                                      "\n\r Range: [0, 2047]", 
                               mc_param::THROTTLE_CAN_ID, nullptr, general_menu, 0};
   general_setting_items[5] = MenuItem{"Use Analog Input", "0 for CAN setpoint, 1 for Throttle input", mc_param::USE_ANALOG, nullptr, general_menu, 0};
   general_setting_items[6] = MenuItem{"Throttle Setup", "Put throttle at minimum, enter 1.\n\rThen put throttle at maximum and enter 1", 
