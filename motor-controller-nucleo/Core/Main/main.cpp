@@ -51,7 +51,7 @@ volatile uint16_t TransistorTemp_ADCVal;
 
 // CAN variables 
 volatile uint16_t CAN_watchdog;
-const uint16_t MAX_CAN_WATCHDOG = 100;
+const uint16_t MAX_CAN_WATCHDOG = 500;
 
 CanNode* hmc_node;
 CanNode* htemperature_node;
@@ -68,6 +68,7 @@ enum class can_group_t : uint8_t {
 };
 
 void can_send_data(can_group_t group);
+void rtrHandle(CanMessage* msg);
 
 /**
   * @brief  The application entry point.
@@ -175,6 +176,29 @@ int main(void)
     ms_cnt50 += time_diff;
     ms_cnt200 += time_diff;
     ms_cnt300 += time_diff;
+    
+    // check if the output is enabled or not
+    // disable outputs if in can mode and we have timed out
+    if (CAN_watchdog > MAX_CAN_WATCHDOG && !use_analog)
+    {
+      // disable TMC4671 outputs
+      tmc4671.disable();
+      HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_RESET);
+      // reset the setpoint
+      tmc4671.set_setpoint(0);
+      // make sure the timer doesn't overflow.
+      CAN_watchdog = MAX_CAN_WATCHDOG + 1;
+    }
+    // enable the outputs if the enable outputs bit is set
+    else if (mc_settings.General.bool_settings.enableOutputs == 1){
+      HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
+      tmc4671.enable();
+    }
+    // otherwise disable outputs
+    else {
+      HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_RESET);
+      tmc4671.disable();
+    }
 
     if (ms_cnt25 >= 25) {
       // clear the watchdog counter
@@ -182,11 +206,6 @@ int main(void)
       CanNode::checkForMessages();
 
       CAN_watchdog += 25;
-      if (CAN_watchdog > MAX_CAN_WATCHDOG && !use_analog)
-      {
-        // disable TMC4671 outputs
-        //tmc4671.disable();
-      }
       ms_cnt25 = 0;
     }
     if (ms_cnt50 >= 50) {
@@ -197,16 +216,6 @@ int main(void)
         if(setpoint < DEADBAND) setpoint = 0;
         tmc4671.set_setpoint(setpoint);
       } 
-
-      // check if the output is enabled or not
-      if (mc_settings.General.bool_settings.enableOutputs == 1){
-        HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_SET);
-        tmc4671.enable();
-      }
-      else {
-        HAL_GPIO_WritePin(User_LED_GPIO_Port, User_LED_Pin, GPIO_PIN_RESET);
-        tmc4671.disable();
-      }
 
       // send CAN values
       can_send_data(group);
@@ -245,6 +254,15 @@ int main(void)
       ms_cnt300 = 0;
     }
   }
+}
+
+void rtrHandle(CanMessage* msg) {
+  UNUSED(msg);
+  can_send_data(can_group_t::TEMPERATURE);
+  HAL_Delay(5);
+  can_send_data(can_group_t::MOTOR_CURRENT_RPM);
+  HAL_Delay(5);
+  can_send_data(can_group_t::BATTERY_CURRENT_VOLTAGE);
 }
 
 void can_send_data(can_group_t group){
