@@ -3,8 +3,8 @@
 
 #include <cstdint>
 
-// set the maximum current to 30A
-#define GLOBAL_MAX_CURRENT 30000
+// set the maximum current to 60A
+#define GLOBAL_MAX_CURRENT 60000
 
 enum class MotorType_t : std::uint8_t {
     BLDC_MOTOR = 3,
