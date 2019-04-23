@@ -16,10 +16,6 @@ extern MotorControllerValues_t* hmc_settings;
 extern TMC4671Interface* htmc4671;
 extern volatile uint16_t CAN_watchdog;
 
-void rtrHandle(CanMessage* msg) {
-  UNUSED(msg);
-}
-
 void mc_dir_handle(CanMessage* msg)
 {
   HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
@@ -30,8 +26,16 @@ void mc_dir_handle(CanMessage* msg)
   CanNode::getData_uint8(msg, &data);
 
   // set the settings
-  hmc_settings->tmc4671.MotorDir = (data == 0) ?
-      MotorDirection_t::FORWARD : MotorDirection_t::REVERSE;
+  switch (data) {
+  case 0:
+    hmc_settings->tmc4671.MotorDir = MotorDirection_t::FORWARD;
+    break;
+  case 1:
+    hmc_settings->tmc4671.MotorDir = MotorDirection_t::REVERSE;
+    break;
+  default:
+    break;
+  }
 
   // update the motor direction
   htmc4671->set_direction(hmc_settings->tmc4671.MotorDir);
@@ -49,14 +53,15 @@ void mc_cmode_handle(CanMessage* msg)
   // put the data into a valid state
   switch (data)
   {
+    // don't go into open loop mode (or any other invalid mode)
     default:
-    data = hmc_settings->tmc4671.ControlMode; 
+    case ControlMode_t::OPEN_LOOP:
+      data = hmc_settings->tmc4671.ControlMode; 
     break;
 
     // in the case where the data is valid, do nothing
-    case ControlMode_t::TORQUE:
+    case ControlMode_t::TORQUE: // fall through
     case ControlMode_t::VELOCITY:
-    case ControlMode_t::OPEN_LOOP:
     break;
   }
   hmc_settings->tmc4671.ControlMode = data;
@@ -76,6 +81,8 @@ void mc_maxCurrent_handle(CanMessage* msg)
   // error check the current setting
   hmc_settings->tmc4671.CurrentLimit = (data > GLOBAL_MAX_CURRENT) ? 
     GLOBAL_MAX_CURRENT : data; 
+
+  htmc4671->change_settings(&hmc_settings->tmc4671);
 }
 
 void mc_maxVel_handle(CanMessage* msg)
@@ -88,6 +95,7 @@ void mc_maxVel_handle(CanMessage* msg)
 
   // error check the current setting
   hmc_settings->tmc4671.VelocityLimit = data;
+  htmc4671->change_settings(&hmc_settings->tmc4671);
 }
 
 void mc_maxAcc_handle(CanMessage* msg)
@@ -100,6 +108,7 @@ void mc_maxAcc_handle(CanMessage* msg)
 
   // error check the current setting
   hmc_settings->tmc4671.AccelerationLimit = data;
+  htmc4671->change_settings(&hmc_settings->tmc4671);
 }
 
 void mc_enable_handle(CanMessage* msg)
@@ -108,8 +117,7 @@ void mc_enable_handle(CanMessage* msg)
   HAL_GPIO_TogglePin(CAN_Status_GPIO_Port, CAN_Status_Pin);
   // reset "watchdog" counter
   CAN_watchdog = 0;
-  // re-enable the TMC4671
-  htmc4671->enable();
+  // the chip will be enabled in the main function
 }
 
 void mc_throttle_handle(CanMessage* msg)
