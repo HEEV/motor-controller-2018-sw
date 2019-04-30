@@ -18,7 +18,7 @@ public:
 
   const MenuItem *sub_menu;
   const MenuItem *parent_menu;
-  int sub_menu_items;
+  size_t sub_menu_items;
 };
 
 class ComputerMenu {
