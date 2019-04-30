@@ -15,7 +15,7 @@ ComputerMenu::ComputerMenu(ComputerInterface *ci)
   main_menu_items[3] = MenuItem{"Motor Settings", "", default_param, motor_setting_items.data(), &main_menu, motor_setting_items.size()};
   main_menu_items[4] = MenuItem{"Enable Outputs", "0 to disable motor, 1 to enable motor", 
                           mc_param::ENABLE_OUTPUTS, nullptr, &main_menu, 0};
-  main_menu_items[5] = MenuItem{"Save Settings", "Save settings to flash\n\r 0 to exit, 1 to save current settings",
+  main_menu_items[5] = MenuItem{"Save Settings", "Save settings to flash\n\r enter 1 to save current settings",
                           mc_param::SAVE_SETTINGS, nullptr, &main_menu, 0};
 
   // make references to the main menu items (to the sub menus)
