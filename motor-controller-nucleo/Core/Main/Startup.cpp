@@ -83,6 +83,13 @@ void motor_controller_init()
     Error_Handler();
   }
 
+  // pull the d+ pin low for a few ms to force re-enumeration on the USB line
+  GPIOA->MODER |= (1 << GPIO_MODER_MODER12_Pos) | (1 << GPIO_MODER_MODER11_Pos);
+  //clear the bit
+  GPIOA->ODR &= ~(1 << GPIO_ODR_12) & ~(1 << GPIO_ODR_11);
+  HAL_Delay(10);
+  GPIOA->MODER &= ~(1 << GPIO_MODER_MODER12_Pos) & ~(1 << GPIO_MODER_MODER11_Pos);
+
   // initilize the window watchdog
   MX_WWDG_Init();
 
