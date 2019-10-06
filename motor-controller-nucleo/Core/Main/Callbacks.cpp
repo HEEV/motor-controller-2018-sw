@@ -48,7 +48,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   // check if the sequence is over with
   bool end_of_sequence = __HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOS);
 
-  // read the ADCValue (this will clear some of the flags)
+  // read the ADCValue (this will clear the end of sequence flag)
   auto ADCValue = static_cast<uint16_t>(HAL_ADC_GetValue(hadc));
 
   if (hadc->Instance == ADC1)
